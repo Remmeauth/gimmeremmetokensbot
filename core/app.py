@@ -58,6 +58,39 @@ def handle_check_balance_button(message):
     bot.send_message(message.chat.id, f'Your tokens balance is: {token_balance}')
 
 
+def render_keyboard(message):
+    """
+    Render main keyboard.
+    """
+    keyboard = telebot.types.ReplyKeyboardMarkup(True, False)
+    keyboard.row('Gimme Remme tokens', 'I want to check my balance')
+    bot.send_message(message.from_user.id, 'Choose something:', reply_markup=keyboard)
+
+
+@bot.message_handler(func=lambda message: message.text == 'Gimme Remme tokens', content_types=['text'])
+def handle_gimme_tokens_button(message):
+    """
+    Handle user's request to send Remme token to his address.
+    """
+    batch_id = RemmeToken(private_key_hex=MASTER_ACCOUNT_PRIVATE_KEY).send_transaction(
+        public_key_to='0262fa4ba54bc181163104be925bb4ccca61a91fb50b7fa2d9f065aa2730e3304e',
+    )
+
+    bot.send_message(message.chat.id, f'Tokens have been sent! Batch identifier is: {batch_id}')
+
+
+@bot.message_handler(func=lambda message: message.text == 'I want to check my balance', content_types=['text'])
+def handle_check_balance_button(message):
+    """
+    Handle user's request to check balance his balance.
+    """
+    token_balance = RemmeToken().get_balance(
+        address='1120071dd9da358c3c50f15802966f89c5d82f636c8cd79203109f52e6f346dce27305',
+    )
+
+    bot.send_message(message.chat.id, f'Your tokens balance is: {token_balance}')
+
+
 @bot.message_handler(commands=['start'])
 def start_message(message):
     """
@@ -71,8 +104,8 @@ def start_message(message):
     chat_message = \
         'Hello, we appreciate your attention on Global Hack Weekend and participation in REMME challenges.\n' \
         'For dealing with REMME stuff we send you newly created account which you can request ' \
-        'REMME \ntokens for testing purposes for! \n' \
-        f'Address: {remme.address}\n\n' \
+        'REMME \ntokens for testing purposes for! \n\n' \
+        f'Address: {remme.address}\n' \
         f'Public key: {remme.public_key_hex}\n' \
         f'Private key: {remme.private_key_hex}\n'
 
