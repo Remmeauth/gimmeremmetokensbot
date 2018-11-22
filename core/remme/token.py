@@ -1,22 +1,31 @@
-from remme.utils import generate_address
+"""
+Provide implementation of the Remme node tokens.
+
+Code below is vendor code and located by address `https://github.com/Remmeauth/remme-client-python`.
+"""
+import os
+import json
+from base64 import b64encode
+
+import requests
+
+from configs import REMME_NODE_CONFIG
+
+from remme.account import RemmeAccount
+from remme.constants.amount import STABLE_REMME_TOKENS_REQUEST_AMOUNT
 from remme.constants.family_name import RemmeFamilyName
 from remme.protos.account_pb2 import AccountMethod, TransferPayload
 from remme.protos.transaction_pb2 import TransactionPayload
-
-
-from remme_client.remme.remme_utils import create_nonce, sha512_hexdigest
-from base64 import b64encode
+from remme.utils import generate_address, create_nonce, sha512_hexdigest
 from sawtooth_sdk.protobuf.transaction_pb2 import TransactionHeader, Transaction
 
 
-from remme.account import RemmeAccount
-
 class TransactionService:
 
-    def __init__(self):
-        self._remme_account = RemmeAccount(self._private_key_hex)
+    def __init__(self, private_key_hex):
+        self._remme_account = RemmeAccount(private_key_hex)
 
-    async def create(self, family_name, family_version, inputs, outputs, payload_bytes):
+    def create(self, family_name, family_version, inputs, outputs, payload_bytes):
         """
         Documentation for building transactions
         https://sawtooth.hyperledger.org/docs/core/releases/latest/_autogen/sdk_submit_tutorial_python.html#building-the-transaction
@@ -36,10 +45,9 @@ class TransactionService:
         :param payload_bytes: {bytes}
         :return: {Couroutine}
         """
-        # config = await self._remme_api.send_request(RemmeMethods.NODE_CONFIG)
         config = {
-            "node_public_key": "03738df3f4ac3621ba8e89413d3ff4ad036c3a0a4dbb164b695885aab6aab614ad",
-            "storage_public_key": "03738df3f4ac3621ba8e89413d3ff4ad036c3a0a4dbb164b695885aab6aab614ad"
+            "node_public_key": os.environ.get('NODE_PUBLIC_KEY'),
+            "storage_public_key": os.environ.get('STORAGE_PUBLIC_KEY')
         }
 
         txn_header_bytes = TransactionHeader(
@@ -48,7 +56,6 @@ class TransactionService:
             inputs=inputs + [self._remme_account.address],
             outputs=outputs + [self._remme_account.address],
             signer_public_key=self._remme_account.public_key_hex,
-            # batcher_public_key=config.node_public_key,
             batcher_public_key=config.get('node_public_key'),
             nonce=create_nonce(),
             dependencies=[],
@@ -67,25 +74,55 @@ class RemmeToken:
 
     _family_version = "0.1"
 
-    def __init__(self, rest, transaction_service):
-        self.api = rest
-        self.transaction_service = transaction_service
+    def __init__(self, private_key_hex=None):
+        self.transaction_service = TransactionService(private_key_hex=private_key_hex)
 
     @staticmethod
-    def validate_public_key(key):
+    def _send_request(method, params):
+        parameters = {
+            'jsonrpc': '2.0',
+            'id': '11',
+            'method': method,
+            'params': params,
+        }
+
+        return requests.post(
+            'https://' + REMME_NODE_CONFIG.get('node_address'),
+            data=json.dumps(parameters),
+            verify=False
+        )
+
+    @staticmethod
+    def _validate_public_key(key):
         if len(key) != 66:
             raise Exception("Invalid key")
         return key
 
-    def validate_amount(self, amount):
-        if amount <= 0:
-            raise Exception("Invalid amount")
-        return amount
+    def get_balance(self, address):
 
+        balance_info = self._send_request('get_balance', {
+            'public_key_address': address,
+        })
 
-    async def create_transaction(self, public_key_to, amount):
-        public_key_to = self.validate_public_key(public_key_to)
-        amount = self.validate_amount(amount)
+        return balance_info.json().get('result')
+
+    def send_transaction(self, public_key_to, amount=STABLE_REMME_TOKENS_REQUEST_AMOUNT):
+        """
+        Send raw transaction to Remme node.
+        """
+        sent_transaction_info = self._send_request('send_raw_transaction', {
+            'data': self._create_transaction(public_key_to, amount),
+        })
+
+        batch_id = sent_transaction_info.json().get('result')
+
+        return batch_id
+
+    def _create_transaction(self, public_key_to, amount):
+        """
+        Create raw transaction based on address's public key send token to and amount.
+        """
+        public_key_to = self._validate_public_key(public_key_to)
         receiver_address = generate_address(RemmeFamilyName.ACCOUNT.value, public_key_to)
 
         transfer = TransferPayload()
@@ -96,10 +133,10 @@ class RemmeToken:
         tr.method = AccountMethod.TRANSFER
         tr.data = transfer.SerializeToString()
 
-        return await self.transaction_service.create(
+        return self.transaction_service.create(
             family_name=RemmeFamilyName.ACCOUNT.value,
             family_version=self._family_version,
             inputs=[receiver_address],
             outputs=[receiver_address],
-            payload_bytes=tr.SerializeToString()
+            payload_bytes=tr.SerializeToString(),
         )
