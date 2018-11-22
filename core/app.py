@@ -9,9 +9,17 @@ from flask import Flask, request
 
 from remme.account import RemmeAccount
 from remme.token import RemmeToken
+from database import (
+    check_if_user_exist,
+    create_db_tables,
+    get_address,
+    get_public_key,
+    insert_starter_user_info,
+)
 
 TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
 MASTER_ACCOUNT_PRIVATE_KEY = os.environ.get('MASTER_ACCOUNT_PRIVATE_KEY')
+PRODUCTION_HOST = os.environ.get('PRODUCTION_HOST')
 
 bot = telebot.TeleBot(TOKEN)
 server = Flask(__name__)
@@ -34,48 +42,9 @@ def handle_gimme_tokens_button(message):
     """
     Handle user's request to send Remme token to his address.
     """
-    public_key = '0262fa4ba54bc181163104be925bb4ccca61a91fb50b7fa2d9f065aa2730e3304e'
+    public_key = get_public_key(chat_id=message.chat.id)
 
     batch_id = RemmeToken(private_key_hex=MASTER_ACCOUNT_PRIVATE_KEY).send_transaction(public_key_to=public_key)
-    logger.info(f'Account with public key `{public_key}` has requested tokens.')
-
-    bot.send_message(
-        message.chat.id,
-        f'Tokens have been sent! Batch (you can check transaction status by) identifier is: {batch_id}',
-    )
-
-
-@bot.message_handler(func=lambda message: message.text == 'I want to check my balance', content_types=['text'])
-def handle_check_balance_button(message):
-    """
-    Handle user's request to check balance his balance.
-    """
-    address = '1120071dd9da358c3c50f15802966f89c5d82f636c8cd79203109f52e6f346dce27305'
-
-    token_balance = RemmeToken().get_balance(address=address)
-    logger.info(f'Account with address `{address}` has checked tokens balance.')
-
-    bot.send_message(message.chat.id, f'Your tokens balance is: {token_balance}')
-
-
-def render_keyboard(message):
-    """
-    Render main keyboard.
-    """
-    keyboard = telebot.types.ReplyKeyboardMarkup(True, False)
-    keyboard.row('Gimme Remme tokens', 'I want to check my balance')
-    bot.send_message(message.from_user.id, 'Choose something:', reply_markup=keyboard)
-
-
-@bot.message_handler(func=lambda message: message.text == 'Gimme Remme tokens', content_types=['text'])
-def handle_gimme_tokens_button(message):
-    """
-    Handle user's request to send Remme token to his address.
-    """
-    batch_id = RemmeToken(private_key_hex=MASTER_ACCOUNT_PRIVATE_KEY).send_transaction(
-        public_key_to='0262fa4ba54bc181163104be925bb4ccca61a91fb50b7fa2d9f065aa2730e3304e',
-    )
-
     bot.send_message(message.chat.id, f'Tokens have been sent! Batch identifier is: {batch_id}')
 
 
@@ -85,7 +54,7 @@ def handle_check_balance_button(message):
     Handle user's request to check balance his balance.
     """
     token_balance = RemmeToken().get_balance(
-        address='1120071dd9da358c3c50f15802966f89c5d82f636c8cd79203109f52e6f346dce27305',
+        address=get_address(chat_id=message.chat.id),
     )
 
     bot.send_message(message.chat.id, f'Your tokens balance is: {token_balance}')
@@ -101,6 +70,20 @@ def start_message(message):
     remme = RemmeAccount(private_key_hex=None)
     logger.info(f'Account with address `{remme.address}` is created.')
 
+    is_user = check_if_user_exist(chat_id=message.chat.id)
+
+    if is_user:
+        bot.send_message(message.chat.id, 'You already got the credentials. Find it at the start of the dialog.')
+        return
+
+    insert_starter_user_info(
+        chat_id=message.chat.id,
+        nickname=message.from_user.username,
+        address=remme.address,
+        public_key=remme.public_key_hex,
+        are_creads_shown=True,
+    )
+
     chat_message = \
         'Hello, we appreciate your attention on Global Hack Weekend and participation in REMME challenges.\n' \
         'For dealing with REMME stuff we send you newly created account which you can request ' \
@@ -113,30 +96,32 @@ def start_message(message):
     render_keyboard(message)
 
 
-@server.route("/" + TOKEN, methods=['POST'])
+@server.route('/' + TOKEN, methods=['POST'])
 def getMessage():
     """
     Read new updates.
     """
     bot.process_new_updates(
-        [telebot.types.Update.de_json(request.stream.read().decode("utf-8"))]
+        [telebot.types.Update.de_json(request.stream.read().decode('utf-8'))]
     )
 
-    return "!", 200
+    return '!', 200
 
 
-@server.route("/")
+@server.route('/')
 def webhook():
     """
     Initialize webhook for production server.
     """
     bot.remove_webhook()
-    bot.set_webhook(url="https://intense-harbor-47746.herokuapp.com/" + TOKEN)
+    bot.set_webhook(url=PRODUCTION_HOST + '/' + TOKEN)
 
     return '!', 200
 
 
 if __name__ == '__main__':
+    create_db_tables()
+
     if os.environ.get('ENVIRONMENT') == 'production':
         server.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
 
