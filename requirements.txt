@@ -5,4 +5,5 @@ conda
 flask==1.0.2
 pyTelegramBotAPI==3.6.5
 protobuf==3.6.1
+requests==2.20.1
 sawtooth-sdk==1.0.5
