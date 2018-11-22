@@ -6,4 +6,5 @@ flask==1.0.2
 protobuf==3.6.1
 psycopg2==2.7.6.1
 pyTelegramBotAPI==3.6.5
+requests==2.20.1
 sawtooth-sdk==1.0.5

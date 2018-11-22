@@ -2,7 +2,9 @@
 
 Our project have the following dependencies:
 
-1. Python 3.6+
+1. Python 3.6+;
+2. libsecp256k1-dev;
+3. Required by one of the requirements [system packages list](https://github.com/ludbb/secp256k1-py#installation-with-compilation).
 
 ## Getting started
 
@@ -15,9 +17,7 @@ $ cd gimmeremmetokensbot
 Install requirements via pip:
 
 ```
-$ git clone https://github.com/Remmeauth/gimmeremmetokensbot
-$ cd gimmeremmetokensbot
-$ pip3 install -r requirement.txt
+$ pip3 install -r requirements.txt
 ```
 
 Visit [environment variables](#environment-variables) section to make sure you set all environment variables needed for project.
@@ -41,7 +41,12 @@ Required environment variables:
 
 1. ENVIRONMENT - variable for simultaneous use of bot functions for local and production servers without changing the code. Possible: `local` or `production`.
 2. TELEGRAM_BOT_TOKEN - to share bot Telegram bot secure.
-3. PORT - automatically set by Heroku and do not need for local development.
+3. MASTER_ACCOUNT_PRIVATE_KEY - account's private key to send testing token from.
+4. STABLE_REMME_TOKENS_REQUEST_AMOUNT - amount of the Remme tokens to send from master account.
+5. NODE_PUBLIC_KEY - node, Telegram bot should make requests, public key.
+6. STORAGE_PUBLIC_KEY - storage, Telegram bot should make requests, public key.
+
+To get node and storage public keys, visit (RPC API)[https://remmeio.atlassian.net/wiki/spaces/WikiREMME/pages/292814862/RPC+API+specification] of node.
 
 ```
 $ export ENVIRONMENT="local"
