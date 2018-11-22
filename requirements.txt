@@ -1,0 +1,8 @@
+aiohttp==3.4.4
+aiohttp-json-rpc==0.11.2
+cryptography==2.4.2
+conda
+flask==1.0.2
+pyTelegramBotAPI==3.6.5
+protobuf==3.6.1
+sawtooth-sdk==1.0.5
