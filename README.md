@@ -17,8 +17,6 @@ $ cd gimmeremmetokensbot
 Install requirements via pip:
 
 ```
-$ git clone https://github.com/Remmeauth/gimmeremmetokensbot
-$ cd gimmeremmetokensbot
 $ pip3 install -r requirements.txt
 ```
 
@@ -44,8 +42,9 @@ Required environment variables:
 1. ENVIRONMENT - variable for simultaneous use of bot functions for local and production servers without changing the code. Possible: `local` or `production`.
 2. TELEGRAM_BOT_TOKEN - to share bot Telegram bot secure.
 3. MASTER_ACCOUNT_PRIVATE_KEY - account's private key to send testing token from.
-4. NODE_PUBLIC_KEY - node, Telegram bot should make requests, public key.
-5. STORAGE_PUBLIC_KEY - storage, Telegram bot should make requests, public key.
+4. STABLE_REMME_TOKENS_REQUEST_AMOUNT - amount of the Remme tokens to send from master account.
+5. NODE_PUBLIC_KEY - node, Telegram bot should make requests, public key.
+6. STORAGE_PUBLIC_KEY - storage, Telegram bot should make requests, public key.
 
 To get node and storage public keys, visit (RPC API)[https://remmeio.atlassian.net/wiki/spaces/WikiREMME/pages/292814862/RPC+API+specification] of node.
 

@@ -39,7 +39,10 @@ def handle_gimme_tokens_button(message):
     batch_id = RemmeToken(private_key_hex=MASTER_ACCOUNT_PRIVATE_KEY).send_transaction(public_key_to=public_key)
     logger.info(f'Account with public key `{public_key}` has requested tokens.')
 
-    bot.send_message(message.chat.id, f'Tokens have been sent! Batch identifier is: {batch_id}')
+    bot.send_message(
+        message.chat.id,
+        f'Tokens have been sent! Batch (you can check transaction status by) identifier is: {batch_id}',
+    )
 
 
 @bot.message_handler(func=lambda message: message.text == 'I want to check my balance', content_types=['text'])
