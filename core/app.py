@@ -1,6 +1,7 @@
 """
 Provide implementation of Telegram bot core.
 """
+import logging
 import os
 
 import telebot
@@ -14,6 +15,9 @@ MASTER_ACCOUNT_PRIVATE_KEY = os.environ.get('MASTER_ACCOUNT_PRIVATE_KEY')
 
 bot = telebot.TeleBot(TOKEN)
 server = Flask(__name__)
+
+logger = telebot.logger
+telebot.logger.setLevel(logging.DEBUG)
 
 
 def render_keyboard(message):
@@ -30,9 +34,10 @@ def handle_gimme_tokens_button(message):
     """
     Handle user's request to send Remme token to his address.
     """
-    batch_id = RemmeToken(private_key_hex=MASTER_ACCOUNT_PRIVATE_KEY).send_transaction(
-        public_key_to='0262fa4ba54bc181163104be925bb4ccca61a91fb50b7fa2d9f065aa2730e3304e',
-    )
+    public_key = '0262fa4ba54bc181163104be925bb4ccca61a91fb50b7fa2d9f065aa2730e3304e'
+
+    batch_id = RemmeToken(private_key_hex=MASTER_ACCOUNT_PRIVATE_KEY).send_transaction(public_key_to=public_key)
+    logger.info(f'Account with public key `{public_key}` has requested tokens.')
 
     bot.send_message(message.chat.id, f'Tokens have been sent! Batch identifier is: {batch_id}')
 
@@ -42,9 +47,10 @@ def handle_check_balance_button(message):
     """
     Handle user's request to check balance his balance.
     """
-    token_balance = RemmeToken().get_balance(
-        address='1120071dd9da358c3c50f15802966f89c5d82f636c8cd79203109f52e6f346dce27305',
-    )
+    address = '1120071dd9da358c3c50f15802966f89c5d82f636c8cd79203109f52e6f346dce27305'
+
+    token_balance = RemmeToken().get_balance(address=address)
+    logger.info(f'Account with address `{address}` has checked tokens balance.')
 
     bot.send_message(message.chat.id, f'Your tokens balance is: {token_balance}')
 
@@ -57,6 +63,7 @@ def start_message(message):
     Contains generation new account (address, public key and private key) and publishing it.
     """
     remme = RemmeAccount(private_key_hex=None)
+    logger.info(f'Account with address `{remme.address}` is created.')
 
     chat_message = \
         'Hello, we appreciate your attention on Global Hack Weekend and participation in REMME challenges.\n' \
