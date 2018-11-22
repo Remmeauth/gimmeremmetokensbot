@@ -12,6 +12,7 @@ from remme.token import RemmeToken
 
 TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
 MASTER_ACCOUNT_PRIVATE_KEY = os.environ.get('MASTER_ACCOUNT_PRIVATE_KEY')
+PRODUCTION_HOST = os.environ.get('PRODUCTION_HOST')
 
 bot = telebot.TeleBot(TOKEN)
 server = Flask(__name__)
@@ -113,25 +114,25 @@ def start_message(message):
     render_keyboard(message)
 
 
-@server.route("/" + TOKEN, methods=['POST'])
+@server.route('/' + TOKEN, methods=['POST'])
 def getMessage():
     """
     Read new updates.
     """
     bot.process_new_updates(
-        [telebot.types.Update.de_json(request.stream.read().decode("utf-8"))]
+        [telebot.types.Update.de_json(request.stream.read().decode('utf-8'))]
     )
 
-    return "!", 200
+    return '!', 200
 
 
-@server.route("/")
+@server.route('/')
 def webhook():
     """
     Initialize webhook for production server.
     """
     bot.remove_webhook()
-    bot.set_webhook(url="https://intense-harbor-47746.herokuapp.com/" + TOKEN)
+    bot.set_webhook(url=PRODUCTION_HOST + '/' + TOKEN)
 
     return '!', 200
 

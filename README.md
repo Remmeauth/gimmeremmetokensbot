@@ -45,6 +45,7 @@ Required environment variables:
 4. STABLE_REMME_TOKENS_REQUEST_AMOUNT - amount of the Remme tokens to send from master account.
 5. NODE_PUBLIC_KEY - node, Telegram bot should make requests, public key.
 6. STORAGE_PUBLIC_KEY - storage, Telegram bot should make requests, public key.
+7. PRODUCTION_HOST - if you run Telegram bot on production, set host (i.e. `https://intense-harbor-47746.herokuapp.com`)
 
 To get node and storage public keys, visit (RPC API)[https://remmeio.atlassian.net/wiki/spaces/WikiREMME/pages/292814862/RPC+API+specification] of node.
 
