@@ -46,6 +46,7 @@ Required environment variables:
 5. NODE_PUBLIC_KEY - node, Telegram bot should make requests, public key.
 6. STORAGE_PUBLIC_KEY - storage, Telegram bot should make requests, public key.
 7. PRODUCTION_HOST - if you run Telegram bot on production, set host (i.e. `https://intense-harbor-47746.herokuapp.com`)
+8. DATABASE_URL - database DSN URL to store information about users.
 
 To get node and storage public keys, visit (RPC API)[https://remmeio.atlassian.net/wiki/spaces/WikiREMME/pages/292814862/RPC+API+specification] of node.
 

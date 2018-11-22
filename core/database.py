@@ -14,7 +14,7 @@ def connection_to_db():
     """
     Return connection to the database or error.
     """
-    credentials = parse_db_url(URL)
+    credentials = parse_db_url(DATABASE_URL)
     connection = psycopg2.connect(**credentials)
 
     return connection
@@ -81,5 +81,17 @@ def get_public_key(chat_id):
     cursor = connection.cursor()
 
     cursor.execute("SELECT public_key FROM remme_tokens_recodring WHERE chat_id={};".format(chat_id))
+
+    return cursor.fetchone()[0]
+
+
+def get_address(chat_id):
+    """
+    Get address by chat id.
+    """
+    connection = connection_to_db()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT address FROM remme_tokens_recodring WHERE chat_id={};".format(chat_id))
 
     return cursor.fetchone()[0]
