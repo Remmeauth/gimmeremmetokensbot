@@ -7,6 +7,12 @@ import telebot
 from flask import Flask, request
 
 from remme.account import RemmeAccount
+from database import (
+    check_if_user_exist,
+    create_db_tables,
+    get_public_key,
+    insert_starter_user_info,
+)
 
 TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
 
@@ -58,6 +64,8 @@ def webhook():
 
 
 if __name__ == '__main__':
+    create_db_tables()
+
     if os.environ.get('ENVIRONMENT') == 'production':
         server.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
 
