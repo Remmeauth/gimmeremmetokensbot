@@ -47,7 +47,8 @@ Required environment variables:
 6. `NODE_PUBLIC_KEY` - node, Telegram bot should make requests, public key.
 7. `STORAGE_PUBLIC_KEY` - storage, Telegram bot should make requests, public key.
 8. `PRODUCTION_HOST` - if you run Telegram bot on production, set host (i.e. `https://intense-harbor-47746.herokuapp.com`)
-9. `DATABASE_URL` - database DSN URL to store information about users.
+9. `DATABASE_URL` - production database DSN URL to store information about users.
+10. `TESTING_DATABASE_URL` - development database DSN URL to store information about users.
 
 To get node and storage public keys, visit (RPC API)[https://remmeio.atlassian.net/wiki/spaces/WikiREMME/pages/292814862/RPC+API+specification] of node.
 
@@ -71,4 +72,14 @@ if os.environ.get('ENVIRONMENT') == 'production':
 
 if os.environ.get('ENVIRONMENT') == 'local':
     bot.polling()
+```
+
+## Development
+
+To run all tests or run particular test use the following command:
+
+```
+$ pytest -vv gimmeremmetokensbot
+$ pytest -vv gimmeremmetokensbot/tests/test_database.py
+$ pytest -vv gimmeremmetokensbot/tests/test_database.py::test_check_if_user_exist
 ```
