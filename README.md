@@ -1,3 +1,16 @@
+# Gimmeremmetokensbot
+
+![Python3](https://img.shields.io/badge/Python-3.6-brightgreen.svg)
+
+`Gimmeremmetokensbot` — [Telegram bot](https://core.telegram.org/bots) for [Remme](https://remme.io) tokens distribution for testing purposes.
+
+![example-of-usage](https://im5.ezgif.com/tmp/ezgif-5-2aca8e02bd9d.gif)
+
+Bot's the following functionality:
+1. Create new account for user;
+2. Distribute Remme tokens to account address;
+3. Inform user about account tokens balance.
+
 ## Dependencies
 
 Our project have the following dependencies:
@@ -33,13 +46,11 @@ $ python3.6 gimmeremmetokensbot/app.py
 Environment variables are variables that are defined for the current shell and are inherited by any child shells or processes, 
 they are used to pass information into processes that are spawned from the shell. It can be said that environment variables help to create and shape the environment of where a program runs.
 
-We must use environment variable for simultaneous use of bot functions for local and production servers without changing the code.
-
-Create the Telegram test bot with which you will work locally.
+Variable for simultaneous use of bot functions for development and production servers without changing the code.
 
 Required environment variables:
 
-1. `ENVIRONMENT` - variable for simultaneous use of bot functions for development and production servers without changing the code. Possible: `development` or `production`.
+1. `ENVIRONMENT` - `development` or `production`.
 2. `TELEGRAM_BOT_TOKEN` - to share bot Telegram bot secure.
 3. `MASTER_ACCOUNT_PRIVATE_KEY` - account's private key to send testing token from.
 4. `STABLE_REMME_TOKENS_REQUEST_AMOUNT` - amount of the Remme tokens to send from master account.
@@ -49,11 +60,12 @@ Required environment variables:
 8. `PRODUCTION_HOST` - if you run Telegram bot on production, set host (i.e. `https://intense-harbor-47746.herokuapp.com`)
 9. `DATABASE_URL` - production database DSN URL to store information about users.
 10. `TESTING_DATABASE_URL` - development database DSN URL to store information about users.
+11. `REQUEST_TOKENS_PERIOD_IN_HOURS_LIMIT` - request tokens period in hours limit.
 
-To get node and storage public keys, visit (RPC API)[https://remmeio.atlassian.net/wiki/spaces/WikiREMME/pages/292814862/RPC+API+specification] of node.
+To get node and storage public keys, visit [RPC API](https://remmeio.atlassian.net/wiki/spaces/WikiREMME/pages/292814862/RPC+API+specification) of node.
 
 ```
-$ export ENVIRONMENT="local"
+$ export ENVIRONMENT="development"
 ```
 To see a list of all of our environment variables and make sure that there is an environment variable, check its value:
 
@@ -66,11 +78,11 @@ Access the environment variables using the `os.environ.get('ENVIRONMENT')` templ
 
 For instance:
 
-```
+```python
 if os.environ.get('ENVIRONMENT') == 'production':
     SERVER.run(host='0.0.0.0'), port=int(os.environ.get('PORT', 5000)))
 
-if os.environ.get('ENVIRONMENT') == 'local':
+if os.environ.get('ENVIRONMENT') == 'development':
     bot.polling()
 ```
 
