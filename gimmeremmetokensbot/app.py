@@ -1,5 +1,5 @@
 """
-Provide implementation of Telegram bot core.
+Provide implementation of `gimmeremmetokensbot` Telegram bot.
 """
 import logging
 import os
@@ -9,6 +9,12 @@ from flask import Flask, request
 
 from remme.account import RemmeAccount
 from remme.token import RemmeToken
+from constants import (
+    ALREADY_GOTTEN_ACCOUNT_CREDENTIALS_BOT_RESPONSE_PHRASE,
+    CHECK_MY_BALANCE_KEYBOARD_BUTTON,
+    REQUEST_TOKENS_KEYBOARD_BUTTON,
+    START_COMMAND_BOT_RESPONSE_PHRASE,
+)
 from database import (
     check_if_user_exist,
     create_db_tables,
@@ -33,25 +39,28 @@ def render_keyboard(message):
     Render main keyboard.
     """
     keyboard = telebot.types.ReplyKeyboardMarkup(True, False)
-    keyboard.row('Gimme Remme tokens', 'I want to check my balance')
-    bot.send_message(message.from_user.id, 'Choose something:', reply_markup=keyboard)
+    keyboard.row(REQUEST_TOKENS_KEYBOARD_BUTTON, CHECK_MY_BALANCE_KEYBOARD_BUTTON)
+    bot.send_message(message.from_user.id, 'Choose one of the the following keyboard buttons:', reply_markup=keyboard)
 
 
-@bot.message_handler(func=lambda message: message.text == 'Gimme Remme tokens', content_types=['text'])
+@bot.message_handler(func=lambda message: message.text == REQUEST_TOKENS_KEYBOARD_BUTTON, content_types=['text'])
 def handle_gimme_tokens_button(message):
     """
-    Handle user's request to send Remme token to his address.
+    Handle user's request a new batch of Remme tokens.
     """
     public_key = get_public_key(chat_id=message.chat.id)
 
     batch_id = RemmeToken(private_key_hex=MASTER_ACCOUNT_PRIVATE_KEY).send_transaction(public_key_to=public_key)
-    bot.send_message(message.chat.id, f'Tokens have been sent! Batch identifier is: {batch_id}')
+    bot.send_message(
+        message.chat.id,
+        f'Tokens have been sent! Batch identifier (use it to fetch transaction data from node) is: {batch_id}',
+    )
 
 
-@bot.message_handler(func=lambda message: message.text == 'I want to check my balance', content_types=['text'])
+@bot.message_handler(func=lambda message: message.text == CHECK_MY_BALANCE_KEYBOARD_BUTTON, content_types=['text'])
 def handle_check_balance_button(message):
     """
-    Handle user's request to check balance his balance.
+    Handle user's request to check address tokens balance.
     """
     token_balance = RemmeToken().get_balance(
         address=get_address(chat_id=message.chat.id),
@@ -65,41 +74,42 @@ def start_message(message):
     """
     Send initial text for user.
 
-    Contains generation new account (address, public key and private key) and publishing it.
-    """
-    remme = RemmeAccount(private_key_hex=None)
-    logger.info(f'Account with address `{remme.address}` is created.')
+    Contains generation new account (address, public key and private key) and
+    publishing it as part of the responding message.
 
+    If user already has account, send corresponding (your account already created) phrase and do nothing.
+    """
     is_user = check_if_user_exist(chat_id=message.chat.id)
 
     if is_user:
-        bot.send_message(message.chat.id, 'You already got the credentials. Find it at the start of the dialog.')
+        bot.send_message(message.chat.id, ALREADY_GOTTEN_ACCOUNT_CREDENTIALS_BOT_RESPONSE_PHRASE)
         return
+
+    account = RemmeAccount(private_key_hex=None)
+    logger.info(f'Account with address `{account.address}` is created.')
 
     insert_starter_user_info(
         chat_id=message.chat.id,
         nickname=message.from_user.username,
-        address=remme.address,
-        public_key=remme.public_key_hex,
+        address=account.address,
+        public_key=account.public_key_hex,
         are_creads_shown=True,
     )
 
-    chat_message = \
-        'Hello, we appreciate your attention on Global Hack Weekend and participation in REMME challenges.\n' \
-        'For dealing with REMME stuff we send you newly created account which you can request ' \
-        'REMME \ntokens for testing purposes for! \n\n' \
-        f'Address: {remme.address}\n' \
-        f'Public key: {remme.public_key_hex}\n' \
-        f'Private key: {remme.private_key_hex}\n'
+    account_credentials_message_part = \
+        f'\n' \
+        f'Address: {account.address}\n'\
+        f'Public key: {account.public_key_hex}\n' \
+        f'Private key: {account.private_key_hex}'
 
-    bot.send_message(message.chat.id, chat_message)
+    bot.send_message(message.chat.id, START_COMMAND_BOT_RESPONSE_PHRASE + account_credentials_message_part)
     render_keyboard(message)
 
 
 @server.route('/' + TOKEN, methods=['POST'])
-def getMessage():
+def get_updates_from_telegram():
     """
-    Read new updates.
+    Push updates from Telegram to bot pull.
     """
     bot.process_new_updates(
         [telebot.types.Update.de_json(request.stream.read().decode('utf-8'))]
@@ -109,9 +119,9 @@ def getMessage():
 
 
 @server.route('/')
-def webhook():
+def web_hook():
     """
-    Initialize webhook for production server.
+    Initialize web-hook for production server.
     """
     bot.remove_webhook()
     bot.set_webhook(url=PRODUCTION_HOST + '/' + TOKEN)
@@ -125,5 +135,5 @@ if __name__ == '__main__':
     if os.environ.get('ENVIRONMENT') == 'production':
         server.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
 
-    if os.environ.get('ENVIRONMENT') == 'local':
+    if os.environ.get('ENVIRONMENT') == 'development':
         bot.polling()
