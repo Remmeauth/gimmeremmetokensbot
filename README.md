@@ -39,7 +39,7 @@ Create the Telegram test bot with which you will work locally.
 
 Required environment variables:
 
-1. `ENVIRONMENT` - variable for simultaneous use of bot functions for local and production servers without changing the code. Possible: `development` or `production`.
+1. `ENVIRONMENT` - variable for simultaneous use of bot functions for development and production servers without changing the code. Possible: `development` or `production`.
 2. `TELEGRAM_BOT_TOKEN` - to share bot Telegram bot secure.
 3. `MASTER_ACCOUNT_PRIVATE_KEY` - account's private key to send testing token from.
 4. `STABLE_REMME_TOKENS_REQUEST_AMOUNT` - amount of the Remme tokens to send from master account.

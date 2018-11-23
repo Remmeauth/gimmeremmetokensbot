@@ -105,5 +105,3 @@ manage.py
 login_app
 
 .DS_Store
-
-core/remme_client
