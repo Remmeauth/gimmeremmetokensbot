@@ -2,6 +2,7 @@
 Settings of the database.
 """
 import os
+from datetime import datetime
 
 import psycopg2
 
@@ -12,7 +13,7 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 
 def connection_to_db():
     """
-    Return connection to the database or error.
+    Get connection to the database.
     """
     credentials = parse_db_url(DATABASE_URL)
     connection = psycopg2.connect(**credentials)
@@ -43,7 +44,7 @@ def create_db_tables():
 
 def check_if_user_exist(chat_id):
     """
-    Check if user exists.
+    Check if user exists by chat id.
     """
     connection = connection_to_db()
     cursor = connection.cursor()
@@ -73,6 +74,22 @@ def insert_starter_user_info(chat_id, nickname, address, public_key, are_creads_
     connection.commit()
 
 
+def update_request_tokens_datetime(chat_id):
+    """
+    Update request tokens datetime by chat id.
+    """
+    connection = connection_to_db()
+    cursor = connection.cursor()
+
+    date_string = f'{datetime.now():%Y-%m-%d %H:%M:%S%z}'
+
+    cursor.execute(
+        "UPDATE remme_tokens_recodring SET token_request_datetime=%s WHERE chat_id=%s;", (date_string, chat_id),
+    )
+
+    connection.commit()
+
+
 def get_public_key(chat_id):
     """
     Get public key by chat id.
@@ -93,5 +110,17 @@ def get_address(chat_id):
     cursor = connection.cursor()
 
     cursor.execute("SELECT address FROM remme_tokens_recodring WHERE chat_id={};".format(chat_id))
+
+    return cursor.fetchone()[0]
+
+
+def get_request_tokens_datetime(chat_id):
+    """
+    Get request tokens datetime by chat id.
+    """
+    connection = connection_to_db()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT token_request_datetime FROM remme_tokens_recodring WHERE chat_id={};".format(chat_id))
 
     return cursor.fetchone()[0]
