@@ -1,0 +1,5 @@
+.idea/
+docs.zip
+docs
+poetry.lock
+remme_client.egg-info/
