@@ -6,12 +6,14 @@ import os
 from datetime import datetime
 
 import telebot
+import psycopg2
 from flask import Flask, request
 
 from constants import (
-    ALREADY_GOTTEN_ACCOUNT_CREDENTIALS_BOT_RESPONSE_PHRASE,
+    ALREADY_GOTTEN_ACCOUNT_CREDENTIALS_PHRASE,
     CHECK_MY_BALANCE_KEYBOARD_BUTTON,
     REQUEST_TOKENS_KEYBOARD_BUTTON,
+    SOMETHING_WENT_WRONG_PHRASE,
     START_COMMAND_BOT_RESPONSE_PHRASE,
 )
 from database import (
@@ -82,24 +84,28 @@ def handle_gimme_tokens_button(message):
     """
     Handle user's request a new batch of Remme tokens.
     """
-    public_key = get_public_key(chat_id=message.chat.id)
+    try:
+        public_key = get_public_key(chat_id=message.chat.id)
 
-    request_tokens_datetime = get_request_tokens_datetime(message.chat.id)
+        request_tokens_datetime = get_request_tokens_datetime(message.chat.id)
 
-    if not is_request_tokens_possible(public_key=public_key, request_tokens_datetime=request_tokens_datetime):
+        if not is_request_tokens_possible(public_key=public_key, request_tokens_datetime=request_tokens_datetime):
+            bot.send_message(
+                message.chat.id,
+                f'You are able to request tokens only once per {REQUEST_TOKENS_PERIOD_IN_HOURS_LIMIT} hours.',
+            )
+            return
+
+        batch_id = RemmeToken(private_key_hex=MASTER_ACCOUNT_PRIVATE_KEY).send_transaction(public_key_to=public_key)
+        update_request_tokens_datetime(chat_id=message.chat.id)
+
         bot.send_message(
             message.chat.id,
-            f'You are able to request tokens only once per {REQUEST_TOKENS_PERIOD_IN_HOURS_LIMIT} hours.',
+            f'Tokens have been sent! Batch identifier (use it to fetch transaction data from node) is: {batch_id}',
         )
-        return
 
-    batch_id = RemmeToken(private_key_hex=MASTER_ACCOUNT_PRIVATE_KEY).send_transaction(public_key_to=public_key)
-    update_request_tokens_datetime(chat_id=message.chat.id)
-
-    bot.send_message(
-        message.chat.id,
-        f'Tokens have been sent! Batch identifier (use it to fetch transaction data from node) is: {batch_id}',
-    )
+    except psycopg2.ProgrammingError:
+        bot.send_message(message.chat.id, SOMETHING_WENT_WRONG_PHRASE)
 
 
 @bot.message_handler(func=lambda message: message.text == CHECK_MY_BALANCE_KEYBOARD_BUTTON, content_types=['text'])
@@ -107,11 +113,15 @@ def handle_check_balance_button(message):
     """
     Handle user's request to check address tokens balance.
     """
-    token_balance = RemmeToken().get_balance(
-        address=get_address(chat_id=message.chat.id),
-    )
+    try:
+        token_balance = RemmeToken().get_balance(
+            address=get_address(chat_id=message.chat.id),
+        )
 
-    bot.send_message(message.chat.id, f'Your tokens balance is: {token_balance}')
+        bot.send_message(message.chat.id, f'Your tokens balance is: {token_balance}')
+
+    except psycopg2.ProgrammingError:
+        bot.send_message(message.chat.id, SOMETHING_WENT_WRONG_PHRASE)
 
 
 @bot.message_handler(commands=['start'])
@@ -127,7 +137,7 @@ def start_message(message):
     is_user = check_if_user_exist(chat_id=message.chat.id)
 
     if is_user:
-        bot.send_message(message.chat.id, ALREADY_GOTTEN_ACCOUNT_CREDENTIALS_BOT_RESPONSE_PHRASE)
+        bot.send_message(message.chat.id, ALREADY_GOTTEN_ACCOUNT_CREDENTIALS_PHRASE)
         return
 
     account = RemmeAccount(private_key_hex=None)
