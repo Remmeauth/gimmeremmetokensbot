@@ -3,12 +3,11 @@ Provide implementation of `gimmeremmetokensbot` Telegram bot.
 """
 import logging
 import os
+from datetime import datetime
 
 import telebot
 from flask import Flask, request
 
-from remme.account import RemmeAccount
-from remme.token import RemmeToken
 from constants import (
     ALREADY_GOTTEN_ACCOUNT_CREDENTIALS_BOT_RESPONSE_PHRASE,
     CHECK_MY_BALANCE_KEYBOARD_BUTTON,
@@ -20,12 +19,17 @@ from database import (
     create_db_tables,
     get_address,
     get_public_key,
+    get_request_tokens_datetime,
     insert_starter_user_info,
+    update_request_tokens_datetime,
 )
+from remme.account import RemmeAccount
+from remme.token import RemmeToken
 
 TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
 MASTER_ACCOUNT_PRIVATE_KEY = os.environ.get('MASTER_ACCOUNT_PRIVATE_KEY')
 PRODUCTION_HOST = os.environ.get('PRODUCTION_HOST')
+REQUEST_TOKENS_PERIOD_IN_HOURS_LIMIT = int(os.environ.get('REQUEST_TOKENS_PERIOD_IN_HOURS_LIMIT'))
 
 bot = telebot.TeleBot(TOKEN)
 server = Flask(__name__)
@@ -43,6 +47,36 @@ def render_keyboard(message):
     bot.send_message(message.from_user.id, 'Choose one of the the following keyboard buttons:', reply_markup=keyboard)
 
 
+def is_request_tokens_possible(public_key, request_tokens_datetime):
+    """
+    Check if last user's tokens request is fit to set period.
+
+    We have last user's request date and time and variable with limit of requests period.
+    If user's time in second less than limit's one, user's cannot ask more tokens.
+
+    1. Get last user's tokens request datetime;
+    2. Get difference between now datetime and user's in seconds.
+    3. Get limit variable in hours, convert to seconds and equals with user's one.
+    4. If user's tokens request time in seconds is not more that periodic limit time in seconds, return False.
+    5. Else, return True.
+    """
+    if request_tokens_datetime is not None:
+        request_tokens_period_in_seconds_limit = REQUEST_TOKENS_PERIOD_IN_HOURS_LIMIT * 60 * 60
+
+        time_from_last_token_request = datetime.now() - request_tokens_datetime
+        time_from_last_token_request_in_seconds = time_from_last_token_request.total_seconds()
+
+        if time_from_last_token_request_in_seconds < request_tokens_period_in_seconds_limit:
+            logger.info(
+                f'Account with public key `{public_key}` is requesting token, '
+                f'but last token request in second {time_from_last_token_request_in_seconds} not over set '
+                f'{request_tokens_period_in_seconds_limit} as limit.')
+
+            return False
+
+    return True
+
+
 @bot.message_handler(func=lambda message: message.text == REQUEST_TOKENS_KEYBOARD_BUTTON, content_types=['text'])
 def handle_gimme_tokens_button(message):
     """
@@ -50,7 +84,18 @@ def handle_gimme_tokens_button(message):
     """
     public_key = get_public_key(chat_id=message.chat.id)
 
+    request_tokens_datetime = get_request_tokens_datetime(message.chat.id)
+
+    if not is_request_tokens_possible(public_key=public_key, request_tokens_datetime=request_tokens_datetime):
+        bot.send_message(
+            message.chat.id,
+            f'You are able to request tokens only once per {REQUEST_TOKENS_PERIOD_IN_HOURS_LIMIT} hours.',
+        )
+        return
+
     batch_id = RemmeToken(private_key_hex=MASTER_ACCOUNT_PRIVATE_KEY).send_transaction(public_key_to=public_key)
+    update_request_tokens_datetime(chat_id=message.chat.id)
+
     bot.send_message(
         message.chat.id,
         f'Tokens have been sent! Batch identifier (use it to fetch transaction data from node) is: {batch_id}',
@@ -98,11 +143,15 @@ def start_message(message):
 
     account_credentials_message_part = \
         f'\n' \
-        f'Address: {account.address}\n'\
-        f'Public key: {account.public_key_hex}\n' \
-        f'Private key: {account.private_key_hex}'
+        f'*Address*: {account.address}\n'\
+        f'*Public key*: {account.public_key_hex}\n' \
+        f'*Private key*: {account.private_key_hex}'
 
-    bot.send_message(message.chat.id, START_COMMAND_BOT_RESPONSE_PHRASE + account_credentials_message_part)
+    bot.send_message(
+        message.chat.id,
+        START_COMMAND_BOT_RESPONSE_PHRASE + account_credentials_message_part,
+        parse_mode='Markdown',
+    )
     render_keyboard(message)
 
 
