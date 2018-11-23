@@ -1,5 +1,5 @@
 """
-Settings of the database.
+Provide database layer implementation of `gimmeremmetokensbot` Telegram bot.
 """
 import os
 from datetime import datetime
@@ -8,7 +8,11 @@ import psycopg2
 
 from utils import parse_db_url
 
-DATABASE_URL = os.environ.get('DATABASE_URL')
+if os.environ.get('ENVIRONMENT') == 'production':
+    DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if os.environ.get('ENVIRONMENT') == 'development':
+    DATABASE_URL = os.environ.get('TESTING_DATABASE_URL')
 
 
 def connection_to_db():
@@ -38,6 +42,18 @@ def create_db_tables():
         token_request_datetime TIMESTAMP DEFAULT NULL);
         """
     )
+
+    connection.commit()
+
+
+def drop_db_tables():
+    """
+    Drop database tables.
+    """
+    connection = connection_to_db()
+    cursor = connection.cursor()
+
+    cursor.execute("DROP TABLE remme_tokens_recodring;")
 
     connection.commit()
 
@@ -99,7 +115,10 @@ def get_public_key(chat_id):
 
     cursor.execute("SELECT public_key FROM remme_tokens_recodring WHERE chat_id={};".format(chat_id))
 
-    return cursor.fetchone()[0]
+    try:
+        return cursor.fetchone()[0]
+    except TypeError:
+        raise psycopg2.ProgrammingError('Fetching went wrong! No database record found.')
 
 
 def get_address(chat_id):
@@ -111,7 +130,10 @@ def get_address(chat_id):
 
     cursor.execute("SELECT address FROM remme_tokens_recodring WHERE chat_id={};".format(chat_id))
 
-    return cursor.fetchone()[0]
+    try:
+        return cursor.fetchone()[0]
+    except TypeError:
+        raise psycopg2.ProgrammingError('Fetching went wrong! No database record found.')
 
 
 def get_request_tokens_datetime(chat_id):
@@ -123,4 +145,7 @@ def get_request_tokens_datetime(chat_id):
 
     cursor.execute("SELECT token_request_datetime FROM remme_tokens_recodring WHERE chat_id={};".format(chat_id))
 
-    return cursor.fetchone()[0]
+    try:
+        return cursor.fetchone()[0]
+    except TypeError:
+        raise psycopg2.ProgrammingError('Fetching went wrong! No database record found.')
