@@ -1,3 +1,14 @@
+# Gimmeremmetokensbot
+
+![Python3](https://img.shields.io/badge/Python-3.6-brightgreen.svg)
+
+`Gimmeremmetokensbot` — [Telegram bot](https://core.telegram.org/bots) for [Remme](https://remme.io) tokens distribution for testing purposes.
+
+Bot's the following functionality:
+1. Create new account for user;
+2. Distribute Remme tokens to account address;
+3. Inform user about account tokens balance.
+
 ## Dependencies
 
 Our project have the following dependencies:
@@ -25,7 +36,7 @@ Visit [environment variables](#environment-variables) section to make sure you s
 Start server via command line interface:
 
 ```
-$ python3.6 core/app.py
+$ python3.6 gimmeremmetokensbot/app.py
 ```
 
 ## Environment variables
@@ -33,25 +44,25 @@ $ python3.6 core/app.py
 Environment variables are variables that are defined for the current shell and are inherited by any child shells or processes, 
 they are used to pass information into processes that are spawned from the shell. It can be said that environment variables help to create and shape the environment of where a program runs.
 
-We must use environment variable for simultaneous use of bot functions for local and production servers without changing the code.
-
-Create the Telegram test bot with which you will work locally.
+Variable for simultaneous use of bot functions for development and production servers without changing the code.
 
 Required environment variables:
 
-1. ENVIRONMENT - variable for simultaneous use of bot functions for local and production servers without changing the code. Possible: `local` or `production`.
-2. TELEGRAM_BOT_TOKEN - to share bot Telegram bot secure.
-3. MASTER_ACCOUNT_PRIVATE_KEY - account's private key to send testing token from.
-4. STABLE_REMME_TOKENS_REQUEST_AMOUNT - amount of the Remme tokens to send from master account.
-5. NODE_PUBLIC_KEY - node, Telegram bot should make requests, public key.
-6. STORAGE_PUBLIC_KEY - storage, Telegram bot should make requests, public key.
-7. PRODUCTION_HOST - if you run Telegram bot on production, set host (i.e. `https://intense-harbor-47746.herokuapp.com`)
-8. DATABASE_URL - database DSN URL to store information about users.
+1. `ENVIRONMENT` - `development` or `production`.
+2. `TELEGRAM_BOT_TOKEN` - to share bot Telegram bot secure.
+3. `MASTER_ACCOUNT_PRIVATE_KEY` - account's private key to send testing token from.
+4. `STABLE_REMME_TOKENS_REQUEST_AMOUNT` - amount of the Remme tokens to send from master account.
+5. `NODE_HOST` - node, Telegram bot should make requests, host (`i.e. node-genesis-testnet.remme.io`).
+6. `NODE_PUBLIC_KEY` - node, Telegram bot should make requests, public key.
+7. `STORAGE_PUBLIC_KEY` - storage, Telegram bot should make requests, public key.
+8. `PRODUCTION_HOST` - if you run Telegram bot on production, set host (i.e. `https://intense-harbor-47746.herokuapp.com`)
+9. `DATABASE_URL` - database DSN URL to store information about users.
+10. `REQUEST_TOKENS_PERIOD_IN_HOURS_LIMIT` - request tokens period in hours limit.
 
-To get node and storage public keys, visit (RPC API)[https://remmeio.atlassian.net/wiki/spaces/WikiREMME/pages/292814862/RPC+API+specification] of node.
+To get node and storage public keys, visit [RPC API](https://remmeio.atlassian.net/wiki/spaces/WikiREMME/pages/292814862/RPC+API+specification) of node.
 
 ```
-$ export ENVIRONMENT="local"
+$ export ENVIRONMENT="development"
 ```
 To see a list of all of our environment variables and make sure that there is an environment variable, check its value:
 
@@ -60,28 +71,14 @@ To see a list of all of our environment variables and make sure that there is an
 $ printenv ENVIRONMENT
 ```
 
-For the main bot on the Heroku server, set the environment variable `production`:
-
-```
-$ heroku config:set ENVIRONMENT=production
-```
-
-This environment variable is persistent – it will remain in place across deploys and app restarts – so unless you need to change value, you only need to set it once.
-
-Make sure that there is an environment variable, check its value:
-
-```
-$ heroku config or heroku config:get ENVIRONMENT
-```
-
-Access the environment variables using the `os.environ['ENVIRONMENT']` template in Python.
+Access the environment variables using the `os.environ.get('ENVIRONMENT')` template in Python.
 
 For instance:
 
-```
+```python
 if os.environ.get('ENVIRONMENT') == 'production':
     SERVER.run(host='0.0.0.0'), port=int(os.environ.get('PORT', 5000)))
 
-if os.environ.get('ENVIRONMENT') == 'local':
+if os.environ.get('ENVIRONMENT') == 'development':
     bot.polling()
 ```

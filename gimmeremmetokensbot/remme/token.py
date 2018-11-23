@@ -9,8 +9,6 @@ from base64 import b64encode
 
 import requests
 
-from configs import REMME_NODE_CONFIG
-
 from remme.account import RemmeAccount
 from remme.constants.amount import STABLE_REMME_TOKENS_REQUEST_AMOUNT
 from remme.constants.family_name import RemmeFamilyName
@@ -87,7 +85,7 @@ class RemmeToken:
         }
 
         return requests.post(
-            'https://' + REMME_NODE_CONFIG.get('node_address'),
+            'https://' + os.environ.get('NODE_HOST'),
             data=json.dumps(parameters),
             verify=False
         )
