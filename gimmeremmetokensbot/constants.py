@@ -11,5 +11,8 @@ For testing purposes you are able to request a batch of tokens by keyboard below
 created account just for you.
 """
 
-ALREADY_GOTTEN_ACCOUNT_CREDENTIALS_BOT_RESPONSE_PHRASE = \
+ALREADY_GOTTEN_ACCOUNT_CREDENTIALS_PHRASE = \
     'You already got the credentials. Find it at the start of this dialog.'
+
+SOMETHING_WENT_WRONG_PHRASE = \
+    'Something went wrong! Please, contact administrator — @SergYelagin.'
