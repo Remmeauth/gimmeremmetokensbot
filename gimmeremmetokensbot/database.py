@@ -35,7 +35,7 @@ def create_db_tables():
     cursor.execute(
         """CREATE TABLE IF NOT EXISTS remme_tokens_recodring (
         chat_id INTEGER UNIQUE NOT NULL,
-        nickname VARCHAR (50) UNIQUE NOT NULL,
+        nickname VARCHAR (128) DEFAULT NULL,
         address VARCHAR (128) UNIQUE NOT NULL,
         public_key VARCHAR (128) UNIQUE NOT NULL,
         are_creads_shown BOOLEAN NOT NULL,
