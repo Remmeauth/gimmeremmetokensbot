@@ -4,7 +4,7 @@
 
 `Gimmeremmetokensbot` — [Telegram bot](https://core.telegram.org/bots) for [Remme](https://remme.io) tokens distribution for testing purposes.
 
-![example-of-usage](https://github.com/Remmeauth/gimmeremmetokensbot/blob/develop/assets/bot-usage-example.gif)
+![example-of-usage](https://github.com/Remmeauth/gimmeremmetokensbot/blob/develop/assets/bot_usage_example_600_520.gif)
 
 Bot's the following functionality:
 1. Create new account for user;
@@ -82,7 +82,7 @@ For instance:
 
 ```python
 if os.environ.get('ENVIRONMENT') == 'production':
-    SERVER.run(host='0.0.0.0'), port=int(os.environ.get('PORT', 5000)))
+    server.run(host='0.0.0.0'), port=int(os.environ.get('PORT', 5000)))
 
 if os.environ.get('ENVIRONMENT') == 'development':
     bot.polling()
