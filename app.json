@@ -1,0 +1,10 @@
+{
+  "name": "gimmeremmetokensbot",
+  "description": "Telegram bot for Remme tokens distribution for testing purposes.",
+  "keywords": [
+    "remme",
+    "tokens"
+  ],
+  "website": "https://remme.io",
+  "repository": "https://github.com/Remmeauth/gimmeremmetokensbot"
+}
