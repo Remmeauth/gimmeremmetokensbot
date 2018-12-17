@@ -4,7 +4,7 @@
 
 `Gimmeremmetokensbot` — [Telegram bot](https://core.telegram.org/bots) for [Remme](https://remme.io) tokens distribution for testing purposes.
 
-![example-of-usage](https://github.com/Remmeauth/gimmeremmetokensbot/blob/assets/new-gif/assets/gimmeremmetokensbot_usage_exampl_600_520.gif)
+![example-of-usage](https://github.com/Remmeauth/gimmeremmetokensbot/blob/develop/assets/bot_usage_example_600_520.gif)
 
 Bot's the following functionality:
 1. Create new account for user;
