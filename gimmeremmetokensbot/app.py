@@ -14,7 +14,8 @@ from constants import (
     CHECK_MY_BALANCE_KEYBOARD_BUTTON,
     REQUEST_TOKENS_KEYBOARD_BUTTON,
     SOMETHING_WENT_WRONG_PHRASE,
-    START_COMMAND_BOT_RESPONSE_PHRASE,
+    START_COMMAND_BOT_GREETING_PHRASE,
+    START_COMMAND_BOT_TESTNET_INTERACTIONS_PHRASE,
 )
 from database import (
     check_if_user_exist,
@@ -27,6 +28,7 @@ from database import (
 )
 from remme.account import RemmeAccount
 from remme.token import RemmeToken
+from utils import send_keystore_file
 
 TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
 MASTER_ACCOUNT_PRIVATE_KEY = os.environ.get('MASTER_ACCOUNT_PRIVATE_KEY')
@@ -157,11 +159,15 @@ def start_message(message):
         f'*Public key*: {account.public_key_hex}\n' \
         f'*Private key*: {account.private_key_hex}'
 
-    bot.send_message(
-        message.chat.id,
-        START_COMMAND_BOT_RESPONSE_PHRASE + account_credentials_message_part,
-        parse_mode='Markdown',
-    )
+    bot_start_message = \
+        START_COMMAND_BOT_GREETING_PHRASE + \
+        account_credentials_message_part + \
+        START_COMMAND_BOT_TESTNET_INTERACTIONS_PHRASE
+
+    bot.send_message(message.chat.id, bot_start_message, parse_mode='Markdown')
+
+    send_keystore_file(bot=bot, message=message, account=account)
+
     render_keyboard(message)
 
 
