@@ -4,7 +4,7 @@
 
 `Gimmeremmetokensbot` — [Telegram bot](https://core.telegram.org/bots) for [Remme](https://remme.io) tokens distribution for testing purposes.
 
-![example-of-usage](https://im5.ezgif.com/tmp/ezgif-5-84e50285e274.gif)
+![example-of-usage](https://github.com/Remmeauth/gimmeremmetokensbot/blob/develop/assets/bot_usage_example_600_520.gif)
 
 Bot's the following functionality:
 1. Create new account for user;
@@ -58,11 +58,9 @@ Required environment variables:
 3. `MASTER_ACCOUNT_PRIVATE_KEY` - account's private key to send testing token from.
 4. `STABLE_REMME_TOKENS_REQUEST_AMOUNT` - amount of the Remme tokens to send from master account.
 5. `NODE_HOST` - node, Telegram bot should make requests, host (`i.e. node-genesis-testnet.remme.io`).
-6. `NODE_PUBLIC_KEY` - node, Telegram bot should make requests, public key.
-7. `STORAGE_PUBLIC_KEY` - storage, Telegram bot should make requests, public key.
-8. `PRODUCTION_HOST` - if you run Telegram bot on production, set host (i.e. `https://intense-harbor-47746.herokuapp.com`)
-9. `DATABASE_URL` - production database DSN URL to store information about users.
-10. `REQUEST_TOKENS_PERIOD_IN_HOURS_LIMIT` - request tokens period in hours limit.
+6. `PRODUCTION_HOST` - if you run Telegram bot on production, set host (i.e. `https://intense-harbor-47746.herokuapp.com`)
+7. `DATABASE_URL` - production database DSN URL to store information about users.
+8. `REQUEST_TOKENS_PERIOD_IN_HOURS_LIMIT` - request tokens period in hours limit.
 
 To get node and storage public keys, visit [RPC API](https://remmeio.atlassian.net/wiki/spaces/WikiREMME/pages/292814862/RPC+API+specification) of node.
 
@@ -82,7 +80,7 @@ For instance:
 
 ```python
 if os.environ.get('ENVIRONMENT') == 'production':
-    SERVER.run(host='0.0.0.0'), port=int(os.environ.get('PORT', 5000)))
+    server.run(host='0.0.0.0'), port=int(os.environ.get('PORT', 5000)))
 
 if os.environ.get('ENVIRONMENT') == 'development':
     bot.polling()
