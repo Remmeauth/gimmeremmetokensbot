@@ -12,6 +12,7 @@ from flask import Flask, request
 from constants import (
     ALREADY_GOTTEN_ACCOUNT_CREDENTIALS_PHRASE,
     CHECK_MY_BALANCE_KEYBOARD_BUTTON,
+    FAUCET_IS_EMPTY_PHRASE,
     REQUEST_TOKENS_KEYBOARD_BUTTON,
     SOMETHING_WENT_WRONG_PHRASE,
     START_COMMAND_BOT_GREETING_PHRASE,
@@ -27,6 +28,7 @@ from database import (
     update_request_tokens_datetime,
 )
 from remme.account import RemmeAccount
+from remme.constants.amount import STABLE_REMME_TOKENS_REQUEST_AMOUNT
 from remme.token import RemmeToken
 from utils import send_keystore_file
 
@@ -51,7 +53,7 @@ def render_keyboard(message):
     bot.send_message(message.from_user.id, 'Choose one of the the following keyboard buttons:', reply_markup=keyboard)
 
 
-def is_request_tokens_possible(public_key, request_tokens_datetime):
+def is_request_tokens_possible(message, public_key):
     """
     Check if last user's tokens request is fit to set period.
 
@@ -64,6 +66,8 @@ def is_request_tokens_possible(public_key, request_tokens_datetime):
     4. If user's tokens request time in seconds is not more that periodic limit time in seconds, return False.
     5. Else, return True.
     """
+    request_tokens_datetime = get_request_tokens_datetime(message.chat.id)
+
     if request_tokens_datetime is not None:
         request_tokens_period_in_seconds_limit = REQUEST_TOKENS_PERIOD_IN_HOURS_LIMIT * 60 * 60
 
@@ -89,16 +93,21 @@ def handle_gimme_tokens_button(message):
     try:
         public_key = get_public_key(chat_id=message.chat.id)
 
-        request_tokens_datetime = get_request_tokens_datetime(message.chat.id)
+        master_account = RemmeAccount(private_key_hex=MASTER_ACCOUNT_PRIVATE_KEY)
+        master_account_token = RemmeToken(private_key_hex=MASTER_ACCOUNT_PRIVATE_KEY)
 
-        if not is_request_tokens_possible(public_key=public_key, request_tokens_datetime=request_tokens_datetime):
+        if master_account_token.get_balance(address=master_account.address) < STABLE_REMME_TOKENS_REQUEST_AMOUNT:
+            bot.send_message(message.chat.id, FAUCET_IS_EMPTY_PHRASE)
+            return
+
+        if not is_request_tokens_possible(message=message, public_key=public_key):
             bot.send_message(
                 message.chat.id,
                 f'You are able to request tokens only once per {REQUEST_TOKENS_PERIOD_IN_HOURS_LIMIT} hours.',
             )
             return
 
-        batch_id = RemmeToken(private_key_hex=MASTER_ACCOUNT_PRIVATE_KEY).send_transaction(public_key_to=public_key)
+        batch_id = master_account_token.send_transaction(public_key_to=public_key)
         update_request_tokens_datetime(chat_id=message.chat.id)
 
         bot.send_message(

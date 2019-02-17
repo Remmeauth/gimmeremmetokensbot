@@ -13,7 +13,7 @@ For the testing purposes you can request a batch of tokens. To receive it on you
 
 START_COMMAND_BOT_TESTNET_INTERACTIONS_PHRASE = """
 \n[Blockexplorer](https://blockexplorer.remme.io) can be useful to check sent transactions, including yours!
-Broaden horizon - [use libraries written in several programming languages](https://docs.remme.io/) to work with blockchain in many different ways!
+Broaden horizon — [use libraries written in several programming languages](https://docs.remme.io/) to work with blockchain in many different ways!
 
 If you are more a user than a developer, take a look at our [certificate-based authentication](https://webauth-testnet.remme.io/how-to-use) called *WebAuth*.
 It allows you to log in without the password. Use keystore file generated especially for you.
@@ -25,4 +25,7 @@ ALREADY_GOTTEN_ACCOUNT_CREDENTIALS_PHRASE = \
     'You already got the credentials. Find it at the start of this dialog.'
 
 SOMETHING_WENT_WRONG_PHRASE = \
-    'Something went wrong! Please, contact administrator — @SergYelagin.'
+    'Something went wrong! Please, contact administrator — @dmytrostriletskyi.'
+
+FAUCET_IS_EMPTY_PHRASE = \
+    'Faucet is empty. Please, contact administrator to top up its tokens — @dmytrostriletskyi.'
