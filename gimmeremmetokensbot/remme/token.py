@@ -18,9 +18,31 @@ from remme.utils import generate_address, create_nonce, sha512_hexdigest
 from sawtooth_sdk.protobuf.transaction_pb2 import TransactionHeader, Transaction
 
 
+class RequestToNode:
+
+    @staticmethod
+    def send(method, params=None):
+        if params is None:
+            params = {}
+
+        parameters = {
+            'jsonrpc': '2.0',
+            'id': '11',
+            'method': method,
+            'params': params,
+        }
+
+        return requests.post(
+            'https://' + os.environ.get('NODE_HOST'),
+            data=json.dumps(parameters),
+            verify=False
+        )
+
+
 class TransactionService:
 
     def __init__(self, private_key_hex):
+        self.request_to_node = RequestToNode()
         self._remme_account = RemmeAccount(private_key_hex)
 
     def create(self, family_name, family_version, inputs, outputs, payload_bytes):
@@ -43,10 +65,8 @@ class TransactionService:
         :param payload_bytes: {bytes}
         :return: {Couroutine}
         """
-        config = {
-            "node_public_key": os.environ.get('NODE_PUBLIC_KEY'),
-            "storage_public_key": os.environ.get('STORAGE_PUBLIC_KEY')
-        }
+        node_config = self.request_to_node.send(method='get_node_config')
+        node_public_key = node_config.json().get('result').get('node_public_key')
 
         txn_header_bytes = TransactionHeader(
             family_name=family_name,
@@ -54,17 +74,20 @@ class TransactionService:
             inputs=inputs + [self._remme_account.address],
             outputs=outputs + [self._remme_account.address],
             signer_public_key=self._remme_account.public_key_hex,
-            batcher_public_key=config.get('node_public_key'),
+            batcher_public_key=node_public_key,
             nonce=create_nonce(),
             dependencies=[],
             payload_sha512=sha512_hexdigest(payload_bytes)
         ).SerializeToString()
+
         signature = self._remme_account.sign(txn_header_bytes)
+
         txn = Transaction(
             header=txn_header_bytes,
             header_signature=signature,
             payload=payload_bytes
         ).SerializeToString()
+
         return b64encode(txn).decode('utf-8')
 
 
@@ -73,22 +96,8 @@ class RemmeToken:
     _family_version = "0.1"
 
     def __init__(self, private_key_hex=None):
+        self.request_to_node = RequestToNode()
         self.transaction_service = TransactionService(private_key_hex=private_key_hex)
-
-    @staticmethod
-    def _send_request(method, params):
-        parameters = {
-            'jsonrpc': '2.0',
-            'id': '11',
-            'method': method,
-            'params': params,
-        }
-
-        return requests.post(
-            'https://' + os.environ.get('NODE_HOST'),
-            data=json.dumps(parameters),
-            verify=False
-        )
 
     @staticmethod
     def _validate_public_key(key):
@@ -98,7 +107,7 @@ class RemmeToken:
 
     def get_balance(self, address):
 
-        balance_info = self._send_request('get_balance', {
+        balance_info = self.request_to_node.send(method='get_balance', params={
             'public_key_address': address,
         })
 
@@ -108,7 +117,7 @@ class RemmeToken:
         """
         Send raw transaction to Remme node.
         """
-        sent_transaction_info = self._send_request('send_raw_transaction', {
+        sent_transaction_info = self.request_to_node.send(method='send_raw_transaction', params={
             'data': self._create_transaction(public_key_to, amount),
         })
 
