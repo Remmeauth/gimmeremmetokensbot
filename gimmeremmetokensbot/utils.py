@@ -18,11 +18,11 @@ def parse_db_url(url):
     return database_url
 
 
-def send_keystore_file(bot, message, account):
+def send_keystore_file(bot, message, account_public_key, account_private_key):
     """
     Send keystore file in `txt` format with public and private key.
     """
-    file_content = '{' + f'"publicKey":"{account.public_key_hex}","privateKey":"{account.private_key_hex}"' + '}'
+    file_content = '{' + f'"publicKey":"{account_public_key}","privateKey":"{account_private_key}"' + '}'
 
     with open(f'keystore_{message.chat.id}.txt', 'w+') as keystore_file:
         keystore_file.write(file_content)

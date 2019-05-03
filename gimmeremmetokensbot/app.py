@@ -5,9 +5,11 @@ import logging
 import os
 from datetime import datetime
 
+import asyncio
 import telebot
 import psycopg2
 from flask import Flask, request
+from remme import Remme
 
 from constants import (
     ALREADY_GOTTEN_ACCOUNT_CREDENTIALS_PHRASE,
@@ -27,15 +29,12 @@ from database import (
     insert_starter_user_info,
     update_request_tokens_datetime,
 )
-from remme.account import RemmeAccount
-from remme.constants.amount import STABLE_REMME_TOKENS_REQUEST_AMOUNT
-from remme.token import RemmeToken
 from utils import send_keystore_file
 
 TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
-MASTER_ACCOUNT_PRIVATE_KEY = os.environ.get('MASTER_ACCOUNT_PRIVATE_KEY')
 PRODUCTION_HOST = os.environ.get('PRODUCTION_HOST')
 REQUEST_TOKENS_PERIOD_IN_HOURS_LIMIT = int(os.environ.get('REQUEST_TOKENS_PERIOD_IN_HOURS_LIMIT'))
+STABLE_REMME_TOKENS_REQUEST_AMOUNT = int(os.environ.get('STABLE_REMME_TOKENS_REQUEST_AMOUNT'))
 
 bot = telebot.TeleBot(TOKEN)
 server = Flask(__name__)
@@ -90,29 +89,41 @@ def handle_gimme_tokens_button(message):
     """
     Handle user's request a new batch of Remme tokens.
     """
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    remme = Remme(
+        account_config={'private_key_hex': os.environ.get('MASTER_ACCOUNT_PRIVATE_KEY')},
+        network_config={'node_address': str(os.environ.get('NODE_HOST')) + ':8080'},
+    )
+
     try:
-        public_key = get_public_key(chat_id=message.chat.id)
+        master_account_tokens_balance = loop.run_until_complete(remme.token.get_balance(address=remme.account.address))
 
-        master_account = RemmeAccount(private_key_hex=MASTER_ACCOUNT_PRIVATE_KEY)
-        master_account_token = RemmeToken(private_key_hex=MASTER_ACCOUNT_PRIVATE_KEY)
-
-        if master_account_token.get_balance(address=master_account.address) < STABLE_REMME_TOKENS_REQUEST_AMOUNT:
+        if int(master_account_tokens_balance) < STABLE_REMME_TOKENS_REQUEST_AMOUNT:
             bot.send_message(message.chat.id, FAUCET_IS_EMPTY_PHRASE)
             return
 
-        if not is_request_tokens_possible(message=message, public_key=public_key):
+        address_to = get_address(chat_id=message.chat.id)
+        public_key_to = get_public_key(chat_id=message.chat.id)
+
+        if not is_request_tokens_possible(message=message, public_key=public_key_to):
             bot.send_message(
                 message.chat.id,
                 f'You are able to request tokens only once per {REQUEST_TOKENS_PERIOD_IN_HOURS_LIMIT} hours.',
             )
             return
 
-        batch_id = master_account_token.send_transaction(public_key_to=public_key)
+        transaction = loop.run_until_complete(
+            remme.token.transfer(address_to=address_to, amount=STABLE_REMME_TOKENS_REQUEST_AMOUNT),
+        )
+
         update_request_tokens_datetime(chat_id=message.chat.id)
 
         bot.send_message(
             message.chat.id,
-            f'Tokens have been sent! Batch identifier (use it to fetch transaction data from node) is: {batch_id}',
+            f'Tokens have been sent! '
+            f'Batch identifier (use it to fetch transaction data from node) is: {transaction.batch_id}',
         )
 
     except psycopg2.ProgrammingError:
@@ -124,12 +135,19 @@ def handle_check_balance_button(message):
     """
     Handle user's request to check address tokens balance.
     """
-    try:
-        token_balance = RemmeToken().get_balance(
-            address=get_address(chat_id=message.chat.id),
-        )
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
 
-        bot.send_message(message.chat.id, f'Your tokens balance is: {token_balance}')
+    remme = Remme(
+        account_config={'private_key_hex': os.environ.get('MASTER_ACCOUNT_PRIVATE_KEY')},
+        network_config={'node_address': str(os.environ.get('NODE_HOST')) + ':8080'},
+    )
+
+    try:
+        user_tokens_balance = loop.run_until_complete(
+            remme.token.get_balance(address=get_address(chat_id=message.chat.id)),
+        )
+        bot.send_message(message.chat.id, f'Your tokens balance is: {user_tokens_balance}')
 
     except psycopg2.ProgrammingError:
         bot.send_message(message.chat.id, SOMETHING_WENT_WRONG_PHRASE)
@@ -145,28 +163,31 @@ def start_message(message):
 
     If user already has account, send corresponding (your account already created) phrase and do nothing.
     """
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
     is_user = check_if_user_exist(chat_id=message.chat.id)
 
     if is_user:
         bot.send_message(message.chat.id, ALREADY_GOTTEN_ACCOUNT_CREDENTIALS_PHRASE)
         return
 
-    account = RemmeAccount(private_key_hex=None)
-    logger.info(f'Account with address `{account.address}` is created.')
+    remme = Remme(network_config={'node_address': str(os.environ.get('NODE_HOST')) + ':8080'})
+    logger.info(f'Account with address `{remme.account.address}` is created.')
 
     insert_starter_user_info(
         chat_id=message.chat.id,
         nickname=message.from_user.username,
-        address=account.address,
-        public_key=account.public_key_hex,
+        address=remme.account.address,
+        public_key=remme.account.public_key_hex,
         are_creads_shown=True,
     )
 
     account_credentials_message_part = \
         f'\n' \
-        f'*Address*: {account.address}\n'\
-        f'*Public key*: {account.public_key_hex}\n' \
-        f'*Private key*: {account.private_key_hex}'
+        f'*Address*: {remme.account.address}\n'\
+        f'*Public key*: {remme.account.public_key_hex}\n' \
+        f'*Private key*: {remme.account.private_key_hex}'
 
     bot_start_message = \
         START_COMMAND_BOT_GREETING_PHRASE + \
@@ -175,7 +196,12 @@ def start_message(message):
 
     bot.send_message(message.chat.id, bot_start_message, parse_mode='Markdown')
 
-    send_keystore_file(bot=bot, message=message, account=account)
+    send_keystore_file(
+        bot=bot,
+        message=message,
+        account_public_key=remme.account.public_key_hex,
+        account_private_key=remme.account.private_key_hex,
+    )
 
     render_keyboard(message)
 
