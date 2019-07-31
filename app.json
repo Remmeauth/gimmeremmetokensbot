@@ -6,5 +6,51 @@
     "tokens"
   ],
   "website": "https://remme.io",
-  "repository": "https://github.com/Remmeauth/gimmeremmetokensbot"
+  "repository": "https://github.com/Remmeauth/gimmeremmetokensbot",
+  "env": {
+    "ENVIRONMENT": {
+      "description": "Environment value. For now, is used for detect review applications only.",
+      "required": false
+    },
+    "TELEGRAM_BOT_TOKEN": {
+      "description": "Telegram bot token.",
+      "required": true
+    },
+    "DATABASE_URL": {
+      "description": "Databsae to store information about users.",
+      "required": false
+    },
+    "NODEOS_HOST": {
+      "description": "Nodeos host. For instance, `api.jungle.greeneosio.com`.",
+      "required": false
+    },
+    "NODEOS_PORT": {
+      "description": "Nodeos port. For instance, `443`.",
+      "required": false
+    },
+    "MASTER_WALLET_PRIVATE_KEY": {
+      "description": "Faucet wallet private key to sign transactions.",
+      "required": false
+    },
+    "MASTER_ACCOUNT_NAME": {
+      "description": "Faucet account with tokens to sent them to users' accounts.",
+      "required": false
+    },
+    "TRANSACTIONS_SYMBOL": {
+      "description": "Transaction symbol.",
+      "required": false
+    },
+    "STABLE_REMME_TOKENS_REQUEST_AMOUNT": {
+      "description": "Amount of tokens to send from master account.",
+      "required": true
+    },
+    "REQUEST_TOKENS_PERIOD_IN_HOURS_LIMIT": {
+      "description": "Request tokens period in hours limit. For instance, `1` or `12`.",
+      "required": true
+    },
+    "PRODUCTION_HOST": {
+      "description": "Server host, which runs bot. For instance, `https://gimmeremmetokensbot-staging.herokuapp.com`.",
+      "required": true
+    }
+  }
 }

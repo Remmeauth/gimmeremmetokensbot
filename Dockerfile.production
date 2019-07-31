@@ -1,0 +1,10 @@
+FROM python:3.7
+
+WORKDIR /gimmeremmetokensbot
+COPY . /gimmeremmetokensbot
+
+ENV PYTHONPATH="$PYTHONPATH:/gimmeremmetokensbot/src"
+
+RUN pip3 install -r /gimmeremmetokensbot/requirements.txt -r /gimmeremmetokensbot/requirements-production.txt
+
+CMD ["/bin/bash", "/gimmeremmetokensbot/ops/deployment/heroku.sh"]

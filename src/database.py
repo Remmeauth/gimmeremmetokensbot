@@ -8,11 +8,7 @@ import psycopg2
 
 from utils import parse_db_url
 
-if os.environ.get('ENVIRONMENT') == 'production':
-    DATABASE_URL = os.environ.get('DATABASE_URL')
-
-if os.environ.get('ENVIRONMENT') == 'development':
-    DATABASE_URL = os.environ.get('TESTING_DATABASE_URL')
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
 
 def connection_to_db():
@@ -36,7 +32,7 @@ def create_db_tables():
         """CREATE TABLE IF NOT EXISTS remme_tokens_recodring (
         chat_id INTEGER UNIQUE NOT NULL,
         nickname VARCHAR (128) DEFAULT NULL,
-        address VARCHAR (128) UNIQUE NOT NULL,
+        account_name VARCHAR (128) UNIQUE NOT NULL,
         public_key VARCHAR (128) UNIQUE NOT NULL,
         are_creads_shown BOOLEAN NOT NULL,
         token_request_datetime TIMESTAMP DEFAULT NULL);
@@ -75,7 +71,7 @@ def check_if_user_exist(chat_id):
     return False
 
 
-def insert_starter_user_info(chat_id, nickname, address, public_key, are_creads_shown):
+def insert_starter_user_info(chat_id, nickname, account_name, public_key, are_creads_shown):
     """
     Insert starter user information to table.
     """
@@ -83,8 +79,8 @@ def insert_starter_user_info(chat_id, nickname, address, public_key, are_creads_
     cursor = connection.cursor()
 
     cursor.execute(
-        "INSERT INTO remme_tokens_recodring (chat_id, nickname, address, public_key, are_creads_shown) "
-        "VALUES (%s, %s, %s, %s, %s);", (chat_id, nickname, address, public_key, are_creads_shown)
+        "INSERT INTO remme_tokens_recodring (chat_id, nickname, account_name, public_key, are_creads_shown) "
+        "VALUES (%s, %s, %s, %s, %s);", (chat_id, nickname, account_name, public_key, are_creads_shown)
     )
 
     connection.commit()
@@ -121,14 +117,14 @@ def get_public_key(chat_id):
         raise psycopg2.ProgrammingError('Fetching went wrong! No database record found.')
 
 
-def get_address(chat_id):
+def get_account_name(chat_id):
     """
-    Get address by chat id.
+    Get account name by chat id.
     """
     connection = connection_to_db()
     cursor = connection.cursor()
 
-    cursor.execute("SELECT address FROM remme_tokens_recodring WHERE chat_id={};".format(chat_id))
+    cursor.execute("SELECT account_name FROM remme_tokens_recodring WHERE chat_id={};".format(chat_id))
 
     try:
         return cursor.fetchone()[0]
