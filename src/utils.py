@@ -2,6 +2,8 @@
 Provide utils for `gimmeremmetokensbot` Telegram bot.
 """
 import os
+import random
+import string
 
 
 def parse_db_url(url):
@@ -31,3 +33,11 @@ def send_keystore_file(bot, message, account_public_key, account_private_key):
         bot.send_document(message.chat.id, keystore_file)
 
     os.remove(f'keystore_{message.chat.id}.txt')
+
+
+def generate_account_name():
+    """
+    Generate random account name with length equals 12.
+    """
+    return ''.join(random.choice(string.ascii_lowercase) for _ in range(12))
+
