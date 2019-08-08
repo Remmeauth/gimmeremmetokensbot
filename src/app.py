@@ -47,177 +47,27 @@ logger = telebot.logger
 telebot.logger.setLevel(logging.DEBUG)
 
 
-def render_main_keyboard(message):
-    """
-    Render main keyboard.
-    """
-    keyboard = telebot.types.ReplyKeyboardMarkup(True, False)
-    keyboard.row(REQUEST_TOKENS_KEYBOARD_BUTTON, CHECK_MY_BALANCE_KEYBOARD_BUTTON)
-    bot.send_message(message.from_user.id, 'Choose one of the the following keyboard buttons:', reply_markup=keyboard)
-
-
-def is_request_tokens_possible(message, request_tokens_period_in_hours_limit):
-    """
-    Check if last user's tokens request is fit to set period.
-
-    We have last user's request date and time and variable with limit of requests period.
-    If user's time in second less than limit's one, user's cannot ask more tokens.
-
-    1. Get last user's tokens request datetime.
-    2. Get difference between now datetime and user's in seconds.
-    3. Get limit variable in hours, convert to seconds and equals with user's one.
-    4. If user's tokens request time in seconds is not more that periodic limit time in seconds, return False.
-    5. Else, return True.
-    """
-    request_tokens_datetime = get_request_tokens_datetime(message.chat.id)
-
-    if request_tokens_datetime is not None:
-        request_tokens_period_in_seconds_limit = request_tokens_period_in_hours_limit * 60 * 60
-
-        time_from_last_token_request = datetime.now() - request_tokens_datetime
-        time_from_last_token_request_in_seconds = time_from_last_token_request.total_seconds()
-
-        if time_from_last_token_request_in_seconds < request_tokens_period_in_seconds_limit:
-            return False
-
-    return True
-
-
-@bot.message_handler(func=lambda message: message.text == CHECK_MY_BALANCE_KEYBOARD_BUTTON, content_types=['text'])
-def handle_check_balance_button(message):
-    """
-    Handle user's request to check address tokens balance.
-    """
-    try:
-        account_name = get_account_name(chat_id=message.chat.id)
-
-        user_tokens_balance = Account().get_balance(name=account_name, symbol=TRANSACTIONS_SYMBOL)
-        bot.send_message(message.chat.id, f'Your tokens balance is: {user_tokens_balance}')
-
-    except psycopg2.ProgrammingError:
-        bot.send_message(message.chat.id, SOMETHING_WENT_WRONG_PHRASE)
-
-
-@bot.message_handler(func=lambda message: message.text == REQUEST_TOKENS_KEYBOARD_BUTTON, content_types=['text'])
-def handle_gimme_tokens_button(message):
-    """
-    Handle user's request a new batch of Remme tokens.
-    """
-    try:
-        master_account_balance = Account().get_balance(name=MASTER_ACCOUNT_NAME, symbol=TRANSACTIONS_SYMBOL)
-        master_account_tokens_balance = int(float(master_account_balance))
-
-        if int(master_account_tokens_balance) < STABLE_REMME_TOKENS_REQUEST_AMOUNT:
-            bot.send_message(message.chat.id, FAUCET_IS_EMPTY_PHRASE)
-            return
-
-        account_to_name = get_account_name(chat_id=message.chat.id)
-
-        if ENVIRONMENT == 'production':
-
-            request_tokens_period_in_hours_limit = os.environ.get('REQUEST_TOKENS_PERIOD_IN_HOURS_LIMIT')
-
-            if not is_request_tokens_possible(
-                    message=message,
-                    request_tokens_period_in_hours_limit=int(request_tokens_period_in_hours_limit),
-            ):
-                bot.send_message(
-                    message.chat.id,
-                    f'You are able to request tokens only once per {request_tokens_period_in_hours_limit} hours.',
-                )
-                return
-
-        sent_transaction_id = Transaction().send(
-            account_from_name=MASTER_ACCOUNT_NAME,
-            account_to_name=account_to_name,
-            amount=STABLE_REMME_TOKENS_REQUEST_AMOUNT,
-            symbol=TRANSACTIONS_SYMBOL,
-        )
-        update_request_tokens_datetime(chat_id=message.chat.id)
-
-        bot.send_message(
-            message.chat.id,
-            f'Tokens have been sent! Transaction identifier is:\n{sent_transaction_id}',
-        )
-
-    except psycopg2.ProgrammingError:
-        bot.send_message(message.chat.id, SOMETHING_WENT_WRONG_PHRASE)
-
-
 @bot.message_handler(commands=['start'])
-def start_message(message):
-    """
-    Send initial text for user.
+def start(message):
+    bot.reply_to(message, 'Hello, ' + message.from_user.first_name)
 
-    Contains generation new account (address, public key and private key) and
-    publishing it as part of the responding message.
 
-    If user already has account, send corresponding (your account already created) phrase and do nothing.
-    """
-    is_user = check_if_user_exist(chat_id=message.chat.id)
-
-    if is_user:
-        bot.send_message(message.chat.id, ALREADY_GOTTEN_ACCOUNT_CREDENTIALS_PHRASE)
-        return
-
-    wallet = Wallet()
-    account_name = generate_account_name()
-
-    Account().create(wallet_public_key=wallet.public_key, name=account_name)
-
-    logger.info(f'Account with name `{account_name}` is created.')
-
-    Transaction().send(
-        account_from_name=MASTER_ACCOUNT_NAME,
-        account_to_name=account_name,
-        amount=STABLE_REMME_TOKENS_REQUEST_AMOUNT,
-        symbol=TRANSACTIONS_SYMBOL,
-    )
-
-    account_credentials_message_part = \
-        f'\nWe have automatically created an account with some REM tokens for you:' \
-        f'*\nAccount name*: {account_name}' \
-        f'*\nOwner/active public key*: {wallet.public_key}' \
-        f'*\nOwner/active private key*: {wallet.private_key}'
-
-    insert_starter_user_info(
-        chat_id=message.chat.id,
-        nickname=message.from_user.username,
-        account_name=account_name,
-        public_key=wallet.public_key,
-        are_creads_shown=True,
-    )
-
-    bot_start_message = \
-        START_COMMAND_BOT_GREETING_PHRASE + \
-        account_credentials_message_part + \
-        START_COMMAND_BOT_TESTNET_INTERACTIONS_PHRASE
-
-    bot.send_message(message.chat.id, bot_start_message, parse_mode='Markdown')
-    render_main_keyboard(message=message)
+@bot.message_handler(func=lambda message: True, content_types=['text'])
+def echo_message(message):
+    bot.reply_to(message, message.text)
 
 
 @server.route('/' + TOKEN, methods=['POST'])
-def get_updates_from_telegram():
-    """
-    Push updates from Telegram to bot pull.
-    """
-    bot.process_new_updates(
-        [telebot.types.Update.de_json(request.stream.read().decode('utf-8'))]
-    )
-
-    return '!', 200
+def getMessage():
+    bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode("utf-8"))])
+    return "!", 200
 
 
-@server.route('/')
-def web_hook():
-    """
-    Initialize web-hook for production server.
-    """
+@server.route("/")
+def webhook():
     bot.remove_webhook()
     bot.set_webhook(url=PRODUCTION_HOST + '/' + TOKEN)
-
-    return '!', 200
+    return "!", 200
 
 
 if __name__ == '__main__':
