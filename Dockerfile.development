@@ -5,6 +5,8 @@ COPY . /gimmeremmetokensbot
 
 ENV PYTHONPATH="$PYTHONPATH:/gimmeremmetokensbot/src"
 
+RUN git clone -b renamed https://github.com/Remmeauth/eospy && cd eospy && python3 setup.py install && cd ..
+
 RUN pip3 install -r /gimmeremmetokensbot/requirements.txt -r /gimmeremmetokensbot/requirements-dev.txt
 
 CMD python3 src/app.py

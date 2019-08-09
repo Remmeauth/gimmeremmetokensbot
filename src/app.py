@@ -39,6 +39,7 @@ MASTER_ACCOUNT_NAME = os.environ.get('MASTER_ACCOUNT_NAME')
 TRANSACTIONS_SYMBOL = os.environ.get('TRANSACTIONS_SYMBOL')
 STABLE_REMME_TOKENS_REQUEST_AMOUNT = int(os.environ.get('STABLE_REMME_TOKENS_REQUEST_AMOUNT'))
 REQUEST_TOKENS_PERIOD_IN_HOURS_LIMIT = os.environ.get('REQUEST_TOKENS_PERIOD_IN_HOURS_LIMIT')
+STAKE_QUANTITY = os.environ.get('STAKE_QUANTITY')
 
 bot = telebot.TeleBot(TOKEN)
 server = Flask(__name__)
@@ -163,7 +164,12 @@ def start_message(message):
     wallet = Wallet()
     account_name = generate_account_name()
 
-    Account().create(wallet_public_key=wallet.public_key, name=account_name)
+    Account().create(
+        wallet_public_key=wallet.public_key,
+        name=account_name,
+        symbol=TRANSACTIONS_SYMBOL,
+        stake_quantity=STAKE_QUANTITY,
+    )
 
     logger.info(f'Account with name `{account_name}` is created.')
 
@@ -202,10 +208,7 @@ def get_updates_from_telegram():
     """
     Push updates from Telegram to bot pull.
     """
-    bot.process_new_updates(
-        [telebot.types.Update.de_json(request.stream.read().decode('utf-8'))]
-    )
-
+    bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode('utf-8'))])
     return '!', 200
 
 

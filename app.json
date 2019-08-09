@@ -51,6 +51,10 @@
     "PRODUCTION_HOST": {
       "description": "Server host, which runs bot. For instance, `https://gimmeremmetokensbot-staging.herokuapp.com`.",
       "required": true
+    },
+    "STAKE_QUANTITY": {
+      "description": "Stake quantity.",
+      "required": true
     }
   }
 }

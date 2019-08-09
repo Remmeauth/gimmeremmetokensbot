@@ -2,5 +2,4 @@ flask==1.0.2
 psycopg2==2.7.6.1
 pyTelegramBotAPI==3.6.5
 requests==2.20.1
-libeospy==2.0.1
 eosiopy==0.1.4

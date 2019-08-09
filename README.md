@@ -33,15 +33,15 @@ To run the project, use the following command. It will start the server and occu
 ```bash
 $ docker run -v $PWD:/gimmeremmetokensbot \
       -e ENVIRONMENT=development \
-      -e TELEGRAM_BOT_TOKEN='918231803:AAHLN7w1xg82ziHzI3Pgb0NnG0pAFErFS2Q' \
-      -e DATABASE_URL='postgres://vtlavnrs:C1y8UMym4YCHMk7Mw26MfX9nGzUOmq2i@raja.db.elephantsql.com:5432/vtlavnrs' \
-      -e NODEOS_HOST='api.jungle.greeneosio.com' \
-      -e NODEOS_PORT='443' \
-      -e MASTER_WALLET_PRIVATE_KEY='5JpmiRtExjyyRWsGHnqEtfUNZQsuVDUZZHbRhDHJgqzkCcpMeo5' \
-      -e MASTER_ACCOUNT_NAME='remmefaucetp' \
-      -e TRANSACTIONS_SYMBOL='EOS' \
+      -e TELEGRAM_BOT_TOKEN='123552423:AAEAOZaIJQ3FSv69fGghCitx8iGi-_asvz' \
+      -e DATABASE_URL='postgres://vtlavnrs:C1y8UMym4Y1r5a2r12e9nGzUOmq2i@raja.db.elephantsql.com:5432/vtlavnrs' \
+      -e NODEOS_HOST='167.15.12.122' \
+      -e NODEOS_PORT='8888' \
+      -e MASTER_WALLET_PRIVATE_KEY='5JSng6kjkhjbPZLeXsXZBNYXfi124fSUP7nw1aSUP7nw1aXzA3k2' \
+      -e MASTER_ACCOUNT_NAME='rem' \
+      -e TRANSACTIONS_SYMBOL='REM' \
       -e STABLE_REMME_TOKENS_REQUEST_AMOUNT='3' \
-      --name gimmeremmetokensbot gimmeremmetokensbot
+      -e STAKE_QUANTITY='300000' --name gimmeremmetokensbot gimmeremmetokensbot
 ```
 
 If you need to enter the bash of the container, use the following command:
@@ -64,7 +64,6 @@ $ docker rmi $(docker images -q) -f
 
 ## Production
 
-
 Clone the project with the following command:
 
 ```bash
@@ -83,15 +82,16 @@ To run the project, use the following command. It will start the server and occu
 ```bash
 $ docker run -p 8000:8000 -e PORT=8000 -v $PWD:/gimmeremmetokensbot \
       -e ENVIRONMENT=production \
-      -e TELEGRAM_BOT_TOKEN='918231803:AAHLN7w1xg82ziHzI3Pgb0NnG0pAFErFS2Q' \
-      -e DATABASE_URL='postgres://vtlavnrs:C1y8UMym4YCHMk7Mw26MfX9nGzUOmq2i@raja.db.elephantsql.com:5432/vtlavnrs' \
-      -e NODEOS_HOST='api.jungle.greeneosio.com' \
-      -e NODEOS_PORT='443' \
-      -e MASTER_WALLET_PRIVATE_KEY='5JpmiRtExjyyRWsGHnqEtfUNZQsuVDUZZHbRhDHJgqzkCcpMeo5' \
-      -e MASTER_ACCOUNT_NAME='remmefaucetp' \
-      -e TRANSACTIONS_SYMBOL='EOS' \
-      -e STABLE_REMME_TOKENS_REQUEST_AMOUNT=3 \
-      -e PRODUCTION_HOST='https://gimmeremmetokensbot-staging.herokuapp.com' \
-      -e REQUEST_TOKENS_PERIOD_IN_HOURS_LIMIT=1 \
+      -e TELEGRAM_BOT_TOKEN='123552423:AAEAOZaIJQ3FSv69fGghCitx8iGi-_asvz' \
+      -e DATABASE_URL='postgres://vtlavnrs:C1y8UMym4Y1r5a2r12e9nGzUOmq2i@raja.db.elephantsql.com:5432/vtlavnrs' \
+      -e NODEOS_HOST='167.15.12.122' \
+      -e NODEOS_PORT='8888' \
+      -e MASTER_WALLET_PRIVATE_KEY='5JSng6kjkhjbPZLeXsXZBNYXfi124fSUP7nw1aSUP7nw1aXzA3k2' \
+      -e MASTER_ACCOUNT_NAME='rem' \
+      -e TRANSACTIONS_SYMBOL='REM' \
+      -e STABLE_REMME_TOKENS_REQUEST_AMOUNT=10000 \
+      -e PRODUCTION_HOST='http://167.71.88.152' \
+      -e REQUEST_TOKENS_PERIOD_IN_HOURS_LIMIT=4 \
+      -e STAKE_QUANTITY='300000' \
       --name gimmeremmetokensbot gimmeremmetokensbot
 ```

@@ -6,5 +6,6 @@ COPY . /gimmeremmetokensbot
 ENV PYTHONPATH="$PYTHONPATH:/gimmeremmetokensbot/src"
 
 RUN pip3 install -r /gimmeremmetokensbot/requirements.txt -r /gimmeremmetokensbot/requirements-production.txt
+RUN git clone -b renamed https://github.com/Remmeauth/eospy && cd eospy && python3 setup.py install
 
 CMD ["/bin/bash", "/gimmeremmetokensbot/ops/deployment/heroku.sh"]

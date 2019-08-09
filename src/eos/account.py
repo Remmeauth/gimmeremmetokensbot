@@ -6,6 +6,7 @@ import os
 import requests
 
 import eospy.keys
+import telebot
 from eospy.cleos import Cleos
 
 APPLICATION_JSON_HEADERS = {
@@ -18,7 +19,9 @@ MASTER_ACCOUNT_NAME = os.environ.get('MASTER_ACCOUNT_NAME')
 NODEOS_HOST = os.environ.get('NODEOS_HOST')
 NODEOS_PORT = os.environ.get('NODEOS_PORT')
 
-NODEOS_API_URL = f'https://{NODEOS_HOST}:{NODEOS_PORT}/v1/'
+NODEOS_API_URL = f'http://{NODEOS_HOST}:{NODEOS_PORT}/v1/'
+
+logger = telebot.logger
 
 
 class Account:
@@ -32,7 +35,7 @@ class Account:
         """
         payload = {
             'account': name,
-            'code': 'eosio.token',
+            'code': 'rem.token',
             'symbol': symbol,
         }
 
@@ -47,20 +50,21 @@ class Account:
         except (KeyError, IndexError):
             return '0.0000'
 
-    def create(self, wallet_public_key, name):
+    def create(self, wallet_public_key, name, symbol, stake_quantity):
         """
         Create account.
         """
-        Cleos(url=f'https://{NODEOS_HOST}:{NODEOS_PORT}').create_account(
+        response = Cleos(url=f'http://{NODEOS_HOST}:{NODEOS_PORT}').create_account(
             MASTER_ACCOUNT_NAME,
             eospy.keys.EOSKey(MASTER_WALLET_PRIVATE_KEY),
             name,
             wallet_public_key,
             wallet_public_key,
-            stake_net='1.0000 EOS',
-            stake_cpu='1.0000 EOS',
+            stake_quantity=f'{stake_quantity}.0000 {symbol}',
             ramkb=8,
             permission='active',
-            transfer=False,
+            transfer=True,
             broadcast=True,
         )
+
+        logger.info(f'Account creation response: {response}')
