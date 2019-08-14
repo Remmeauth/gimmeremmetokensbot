@@ -22,6 +22,8 @@ from database import (
     check_if_user_exist,
     create_db_tables,
     get_account_name,
+    get_public_key,
+    get_private_key,
     get_request_tokens_datetime,
     insert_starter_user_info,
     update_request_tokens_datetime,
@@ -53,7 +55,7 @@ def render_main_keyboard(message):
     Render main keyboard.
     """
     keyboard = telebot.types.ReplyKeyboardMarkup(True, False)
-    keyboard.row(REQUEST_TOKENS_KEYBOARD_BUTTON, CHECK_MY_BALANCE_KEYBOARD_BUTTON)
+    keyboard.row('Get my account credentials', REQUEST_TOKENS_KEYBOARD_BUTTON, CHECK_MY_BALANCE_KEYBOARD_BUTTON)
     bot.send_message(message.from_user.id, 'Choose one of the the following keyboard buttons:', reply_markup=keyboard)
 
 
@@ -84,6 +86,32 @@ def is_request_tokens_possible(message, request_tokens_period_in_hours_limit):
     return True
 
 
+@bot.message_handler(func=lambda message: message.text == 'Get my account credentials', content_types=['text'])
+def handle_getting_account_credentials(message):
+    """
+    Handle user's request to check address tokens balance.
+    """
+    try:
+        account_name = get_account_name(chat_id=message.chat.id)
+        public_key = get_public_key(chat_id=message.chat.id)
+        private_key = get_private_key(chat_id=message.chat.id)
+
+        balances_message = \
+            f'Your account name: {account_name}\n' \
+            f'Your owner/active public key: {public_key}'
+
+        if private_key is None:
+            balances_message += '\n\nYour private key cannot be fetched because we started supporting the restoring ' \
+                                'account data after the time you got credentials.'
+        else:
+            balances_message += f'\nYour owner/active private key: {private_key}'
+
+        bot.send_message(message.chat.id, balances_message)
+
+    except psycopg2.ProgrammingError:
+        bot.send_message(message.chat.id, SOMETHING_WENT_WRONG_PHRASE)
+
+
 @bot.message_handler(func=lambda message: message.text == CHECK_MY_BALANCE_KEYBOARD_BUTTON, content_types=['text'])
 def handle_check_balance_button(message):
     """
@@ -92,8 +120,16 @@ def handle_check_balance_button(message):
     try:
         account_name = get_account_name(chat_id=message.chat.id)
 
-        user_tokens_balance = Account().get_balance(name=account_name, symbol=TRANSACTIONS_SYMBOL)
-        bot.send_message(message.chat.id, f'Your tokens balance is: {user_tokens_balance}')
+        user_tokens_balance, user_stake_balance, total_balance  = Account().get_balance(
+            name=account_name, symbol=TRANSACTIONS_SYMBOL,
+        )
+
+        balances_message = \
+            f'Your staked tokens: {user_stake_balance} REM\n' \
+            f'Your unstaked tokens: {user_tokens_balance} REM\n' \
+            f'Total: {total_balance}'
+
+        bot.send_message(message.chat.id, balances_message)
 
     except psycopg2.ProgrammingError:
         bot.send_message(message.chat.id, SOMETHING_WENT_WRONG_PHRASE)
@@ -105,8 +141,8 @@ def handle_gimme_tokens_button(message):
     Handle user's request a new batch of Remme tokens.
     """
     try:
-        master_account_balance = Account().get_balance(name=MASTER_ACCOUNT_NAME, symbol=TRANSACTIONS_SYMBOL)
-        master_account_tokens_balance = int(float(master_account_balance))
+        _, _, total_balance = Account().get_balance(name=MASTER_ACCOUNT_NAME, symbol=TRANSACTIONS_SYMBOL)
+        master_account_tokens_balance = int(float(total_balance))
 
         if int(master_account_tokens_balance) < STABLE_REMME_TOKENS_REQUEST_AMOUNT:
             bot.send_message(message.chat.id, FAUCET_IS_EMPTY_PHRASE)
@@ -191,6 +227,7 @@ def start_message(message):
         nickname=message.from_user.username,
         account_name=account_name,
         public_key=wallet.public_key,
+        private_key=wallet.private_key,
         are_creads_shown=True,
     )
 

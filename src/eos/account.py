@@ -57,10 +57,10 @@ class Account:
             logger.info(f'{core_liquid_balance}')
             logger.info(f'{staked}')
 
-            return f'{int(core_liquid_balance) + int(staked)}.0000 REM'
+            return core_liquid_balance, staked, f'{int(core_liquid_balance) + int(staked)}.0000 REM'
 
         except AttributeError:
-            return '300000000.0000'
+            return '300000000.0000', '300000000.0000', '600000000.0000'
 
         # response = requests.post(
         #     NODEOS_API_URL + 'chain/get_currency_balance',

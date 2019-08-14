@@ -34,6 +34,7 @@ def create_db_tables():
         nickname VARCHAR (128) DEFAULT NULL,
         account_name VARCHAR (128) UNIQUE NOT NULL,
         public_key VARCHAR (128) UNIQUE NOT NULL,
+        private_key VARCHAR (128) UNIQUE,
         are_creads_shown BOOLEAN NOT NULL,
         token_request_datetime TIMESTAMP DEFAULT NULL);
         """
@@ -71,7 +72,7 @@ def check_if_user_exist(chat_id):
     return False
 
 
-def insert_starter_user_info(chat_id, nickname, account_name, public_key, are_creads_shown):
+def insert_starter_user_info(chat_id, nickname, account_name, public_key, private_key, are_creads_shown):
     """
     Insert starter user information to table.
     """
@@ -79,8 +80,8 @@ def insert_starter_user_info(chat_id, nickname, account_name, public_key, are_cr
     cursor = connection.cursor()
 
     cursor.execute(
-        "INSERT INTO remme_tokens_recodring (chat_id, nickname, account_name, public_key, are_creads_shown) "
-        "VALUES (%s, %s, %s, %s, %s);", (chat_id, nickname, account_name, public_key, are_creads_shown)
+        "INSERT INTO remme_tokens_recodring (chat_id, nickname, account_name, public_key, private_key, are_creads_shown) "
+        "VALUES (%s, %s, %s, %s, %s, %s);", (chat_id, nickname, account_name, public_key, private_key, are_creads_shown)
     )
 
     connection.commit()
@@ -115,6 +116,21 @@ def get_public_key(chat_id):
         return cursor.fetchone()[0]
     except TypeError:
         raise psycopg2.ProgrammingError('Fetching went wrong! No database record found.')
+
+
+def get_private_key(chat_id):
+    """
+    Get public key by chat id.
+    """
+    import telebot
+    logger = telebot.logger
+
+    connection = connection_to_db()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT private_key FROM remme_tokens_recodring WHERE chat_id={};".format(chat_id))
+
+    return cursor.fetchone()[0]
 
 
 def get_account_name(chat_id):
