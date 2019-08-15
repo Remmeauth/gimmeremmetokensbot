@@ -195,6 +195,7 @@ def start_message(message):
 
     if is_user:
         bot.send_message(message.chat.id, ALREADY_GOTTEN_ACCOUNT_CREDENTIALS_PHRASE)
+        render_main_keyboard(message=message)
         return
 
     wallet = Wallet()
