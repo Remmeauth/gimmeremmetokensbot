@@ -57,7 +57,7 @@ class Account:
             logger.info(f'{core_liquid_balance}')
             logger.info(f'{staked}')
 
-            return core_liquid_balance, staked, f'{int(core_liquid_balance) + int(staked)}.0000 REM'
+            return core_liquid_balance, staked, int(core_liquid_balance) + int(staked)
 
         except AttributeError:
             return '300000000.0000', '300000000.0000', '600000000.0000'
