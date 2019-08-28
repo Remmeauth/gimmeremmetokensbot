@@ -127,7 +127,7 @@ def handle_check_balance_button(message):
         balances_message = \
             f'Your staked tokens: {user_stake_balance} REM\n' \
             f'Your unstaked tokens: {user_tokens_balance} REM\n' \
-            f'Total: {total_balance}'
+            f'Total: {total_balance} REM'
 
         bot.send_message(message.chat.id, balances_message)
 
