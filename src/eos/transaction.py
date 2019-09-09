@@ -2,6 +2,7 @@
 Provide implementation of transaction.
 """
 import os
+import telebot
 
 from eosiopy.eosioparams import EosioParams
 from eosiopy.nodenetwork import NodeNetwork
@@ -14,6 +15,7 @@ NODEOS_PORT = os.environ.get('NODEOS_PORT')
 
 eosio_config.url = f'http://{NODEOS_HOST}'
 eosio_config.port = int(NODEOS_PORT)
+logger = telebot.logger
 
 
 class Transaction:
@@ -35,4 +37,5 @@ class Transaction:
         eosio_params = EosioParams(raw_input_params.params_actions_list, MASTER_WALLET_PRIVATE_KEY)
 
         transaction = NodeNetwork.push_transaction(eosio_params.trx_json)
+        logger.info(f'TRANSACTION RESPONSE: {transaction}')
         return transaction.get('transaction_id')
