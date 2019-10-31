@@ -4,17 +4,13 @@ Provide implementation of transaction.
 import os
 import telebot
 
-from eosiopy.eosioparams import EosioParams
-from eosiopy.nodenetwork import NodeNetwork
-from eosiopy.rawinputparams import RawinputParams
-from eosiopy import eosio_config
+from eospy.keys import EOSKey
+from eospy.cleos import Cleos
 
 MASTER_WALLET_PRIVATE_KEY = os.environ.get('MASTER_WALLET_PRIVATE_KEY')
 NODEOS_HOST = os.environ.get('NODEOS_HOST')
 NODEOS_PORT = os.environ.get('NODEOS_PORT')
 
-eosio_config.url = f'http://{NODEOS_HOST}'
-eosio_config.port = int(NODEOS_PORT)
 logger = telebot.logger
 
 
@@ -27,15 +23,33 @@ class Transaction:
         """
         Send transaction.
         """
-        raw_input_params = RawinputParams('transfer', {
-            'from': account_from_name,
-            'memo': 'Remme Protocol transaction.',
-            'quantity': f'{amount}.0000 {symbol}',
-            'to': account_to_name,
-        }, 'rem.token', f'{account_from_name}@active')
+        cleos_conn = Cleos(url=f'http://{NODEOS_HOST}:{NODEOS_PORT}')
 
-        eosio_params = EosioParams(raw_input_params.params_actions_list, MASTER_WALLET_PRIVATE_KEY)
+        transfer_data = cleos_conn.abi_json_to_bin(
+            'rem.token',
+            'transfer', {
+                'from': account_from_name,
+                'to': account_to_name,
+                'quantity': f'{amount}.0000 {symbol}',
+                'memo': 'Remme Protocol transaction.'
+            })
+        transfer_json = {
+            'account': 'rem.token',
+            'name': 'transfer',
+            'authorization': [{
+                'actor': account_from_name,
+                'permission': 'active'
+            }],
+            'data': transfer_data['binargs']
+        }
+        transaction = {"actions": [transfer_json]}
 
-        transaction = NodeNetwork.push_transaction(eosio_params.trx_json)
-        logger.info(f'TRANSACTION RESPONSE: {transaction}')
-        return transaction.get('transaction_id')
+        transaction_res = cleos_conn.push_transaction(
+            transaction,
+            EOSKey(MASTER_WALLET_PRIVATE_KEY),
+            broadcast=True,
+            timeout=30
+        )
+
+        logger.info(f'TRANSACTION RESPONSE: {transaction_res}')
+        return transaction_res['transaction_id']

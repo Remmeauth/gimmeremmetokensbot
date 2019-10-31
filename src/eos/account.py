@@ -18,6 +18,8 @@ MASTER_WALLET_PRIVATE_KEY = os.environ.get('MASTER_WALLET_PRIVATE_KEY')
 MASTER_ACCOUNT_NAME = os.environ.get('MASTER_ACCOUNT_NAME')
 NODEOS_HOST = os.environ.get('NODEOS_HOST')
 NODEOS_PORT = os.environ.get('NODEOS_PORT')
+STAKE_QUANTITY = os.environ.get('STAKE_QUANTITY')
+MINIMUM_STAKE = 100
 
 NODEOS_API_URL = f'http://{NODEOS_HOST}:{NODEOS_PORT}/v1/'
 
@@ -52,7 +54,8 @@ class Account:
             logger.info(f'AAA*50, {response.json()}')
 
             core_liquid_balance = int(response.json().get('core_liquid_balance').split('.')[0])
-            staked = str(response.json().get('voter_info').get('staked'))[:6]
+            staked = str(response.json().get('voter_info').get('staked'))
+            staked = staked[:-4]  # remove accuracy
 
             logger.info(f'{core_liquid_balance}')
             logger.info(f'{staked}')
@@ -60,7 +63,7 @@ class Account:
             return core_liquid_balance, staked, int(core_liquid_balance) + int(staked)
 
         except AttributeError:
-            return '300000000.0000', '300000000.0000', '600000000.0000'
+            return f'{MINIMUM_STAKE}.0000', f'{STAKE_QUANTITY}.0000', f'{MINIMUM_STAKE + STAKE_QUANTITY}.0000'
 
         # response = requests.post(
         #     NODEOS_API_URL + 'chain/get_currency_balance',

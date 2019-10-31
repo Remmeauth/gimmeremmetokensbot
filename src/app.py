@@ -42,6 +42,7 @@ TRANSACTIONS_SYMBOL = os.environ.get('TRANSACTIONS_SYMBOL')
 STABLE_REMME_TOKENS_REQUEST_AMOUNT = int(os.environ.get('STABLE_REMME_TOKENS_REQUEST_AMOUNT'))
 REQUEST_TOKENS_PERIOD_IN_HOURS_LIMIT = os.environ.get('REQUEST_TOKENS_PERIOD_IN_HOURS_LIMIT')
 STAKE_QUANTITY = os.environ.get('STAKE_QUANTITY')
+MINIMUM_STAKE = 100
 
 bot = telebot.TeleBot(TOKEN)
 server = Flask(__name__)
@@ -205,7 +206,7 @@ def start_message(message):
         wallet_public_key=wallet.public_key,
         name=account_name,
         symbol=TRANSACTIONS_SYMBOL,
-        stake_quantity=STAKE_QUANTITY,
+        stake_quantity=MINIMUM_STAKE,
     )
 
     logger.info(f'Account with name `{account_name}` is created.')
@@ -213,7 +214,7 @@ def start_message(message):
     Transaction().send(
         account_from_name=MASTER_ACCOUNT_NAME,
         account_to_name=account_name,
-        amount=STABLE_REMME_TOKENS_REQUEST_AMOUNT,
+        amount=STAKE_QUANTITY,
         symbol=TRANSACTIONS_SYMBOL,
     )
 
