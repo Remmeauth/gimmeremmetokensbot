@@ -22,7 +22,9 @@ ALREADY_GOTTEN_ACCOUNT_CREDENTIALS_PHRASE = \
     'You already got the credentials. Find it at the start of this dialog.'
 
 SOMETHING_WENT_WRONG_PHRASE = \
-    'Something went wrong! Please, contact administrator — @dmytrostriletskyi.'
+    'If you already used before this bot in the REMChain testnet 1.0, ' \
+    'please restart the bot by entering the command /start.\n' \
+    'If this does not help, please, contact an administrator — @vladpavlichek.'
 
 FAUCET_IS_EMPTY_PHRASE = \
-    'Faucet is empty. Please, contact administrator to top up its tokens — @dmytrostriletskyi.'
+    'Faucet is empty. Please, contact administrator to top up its tokens — @vladpavlichek.'
