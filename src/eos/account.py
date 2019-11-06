@@ -18,10 +18,11 @@ MASTER_WALLET_PRIVATE_KEY = os.environ.get('MASTER_WALLET_PRIVATE_KEY')
 MASTER_ACCOUNT_NAME = os.environ.get('MASTER_ACCOUNT_NAME')
 NODEOS_HOST = os.environ.get('NODEOS_HOST')
 NODEOS_PORT = os.environ.get('NODEOS_PORT')
+NODEOS_PORT = ':' + str(NODEOS_PORT) if NODEOS_PORT else ''
 STAKE_QUANTITY = os.environ.get('STAKE_QUANTITY')
 MINIMUM_STAKE = 100
 
-NODEOS_API_URL = f'http://{NODEOS_HOST}:{NODEOS_PORT}/v1/'
+NODEOS_API_URL = f'https://{NODEOS_HOST}{NODEOS_PORT}'
 
 logger = telebot.logger
 
@@ -46,7 +47,7 @@ class Account:
 
         try:
             response = requests.post(
-                NODEOS_API_URL + 'chain/get_account',
+                NODEOS_API_URL + '/v1/chain/get_account',
                 data=json.dumps(payload),
                 headers=APPLICATION_JSON_HEADERS,
             )
@@ -65,23 +66,11 @@ class Account:
         except AttributeError:
             return f'{MINIMUM_STAKE}.0000', f'{STAKE_QUANTITY}.0000', f'{MINIMUM_STAKE + STAKE_QUANTITY}.0000'
 
-        # response = requests.post(
-        #     NODEOS_API_URL + 'chain/get_currency_balance',
-        #     data=json.dumps(payload),
-        #     headers=APPLICATION_JSON_HEADERS,
-        # )
-
-        # try:
-        #     return response.json().pop(0).replace(f' {symbol}', '')
-        # except (KeyError, IndexError):
-        #     return '0.0000'
-        # return '00.0000'
-
     def create(self, wallet_public_key, name, symbol, stake_quantity):
         """
         Create account.
         """
-        response = Cleos(url=f'http://{NODEOS_HOST}:{NODEOS_PORT}').create_account(
+        response = Cleos(url=NODEOS_API_URL).create_account(
             MASTER_ACCOUNT_NAME,
             eospy.keys.EOSKey(MASTER_WALLET_PRIVATE_KEY),
             name,

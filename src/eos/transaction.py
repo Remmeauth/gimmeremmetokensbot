@@ -10,6 +10,9 @@ from eospy.cleos import Cleos
 MASTER_WALLET_PRIVATE_KEY = os.environ.get('MASTER_WALLET_PRIVATE_KEY')
 NODEOS_HOST = os.environ.get('NODEOS_HOST')
 NODEOS_PORT = os.environ.get('NODEOS_PORT')
+NODEOS_PORT = ':' + str(NODEOS_PORT) if NODEOS_PORT else ''
+
+NODEOS_API_URL = f'https://{NODEOS_HOST}{NODEOS_PORT}'
 
 logger = telebot.logger
 
@@ -23,7 +26,7 @@ class Transaction:
         """
         Send transaction.
         """
-        cleos_conn = Cleos(url=f'http://{NODEOS_HOST}:{NODEOS_PORT}')
+        cleos_conn = Cleos(url=NODEOS_API_URL)
 
         transfer_data = cleos_conn.abi_json_to_bin(
             'rem.token',
