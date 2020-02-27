@@ -20,7 +20,7 @@ NODEOS_HOST = os.environ.get('NODEOS_HOST')
 NODEOS_PORT = os.environ.get('NODEOS_PORT')
 NODEOS_PORT = ':' + str(NODEOS_PORT) if NODEOS_PORT else ''
 STAKE_QUANTITY = os.environ.get('STAKE_QUANTITY')
-MINIMUM_STAKE = 100
+MINIMUM_STAKE = os.environ.get('MINIMUM_STAKE')
 
 NODEOS_API_URL = f'https://{NODEOS_HOST}{NODEOS_PORT}'
 
