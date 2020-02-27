@@ -41,7 +41,8 @@ $ docker run -v $PWD:/gimmeremmetokensbot \
       -e MASTER_ACCOUNT_NAME='rem' \
       -e TRANSACTIONS_SYMBOL='REM' \
       -e STABLE_REMME_TOKENS_REQUEST_AMOUNT='3' \
-      -e STAKE_QUANTITY='300000' --name gimmeremmetokensbot gimmeremmetokensbot
+      -e STAKE_QUANTITY='300000' \
+      -e MINIMUM_STAKE='200' --name gimmeremmetokensbot gimmeremmetokensbot
 ```
 
 If you need to enter the bash of the container, use the following command:
@@ -93,5 +94,6 @@ $ docker run -p 8000:8000 -e PORT=8000 -v $PWD:/gimmeremmetokensbot \
       -e PRODUCTION_HOST='http://167.71.88.152' \
       -e REQUEST_TOKENS_PERIOD_IN_HOURS_LIMIT=4 \
       -e STAKE_QUANTITY='300000' \
+      -e MINIMUM_STAKE='200' \
       --name gimmeremmetokensbot gimmeremmetokensbot
 ```
